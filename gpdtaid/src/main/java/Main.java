@@ -1,11 +1,9 @@
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectInputStream.GetField;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
-import com.jmatio.common.MatDataTypes;
+
+
 import com.jmatio.io.*;
 import com.jmatio.types.*;
 
@@ -40,11 +38,6 @@ public class Main {
 		double t = ((MLDouble) nodeinfo.getField("outgoingLinks", 0)).get(0);
 		
 		System.out.println(t);
-		
-		
-		
-		
-		
 	}
 
 }
