@@ -1,14 +1,16 @@
 package com.aarribas.dtasim;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.RealMatrix;
 
 public class TrafficSimulator {
 
-	private ArrayList<RealMatrix> expandedODMatrices = new ArrayList<RealMatrix>();
+	private ArrayList<double[][]> expandedODMatrices = new ArrayList<double[][]>();
 	private TrafficData tfData = null;
+	private HashSet<TrafficODPair> ODPairs = new HashSet<TrafficODPair>();
 	private double tEnd;
 	private double tStep;
 
@@ -20,21 +22,27 @@ public class TrafficSimulator {
 		tfData = loader.load(fileName);
 
 		expandODMatrices();
-		
-		System.out.println(expandedODMatrices.get(450).toString());
+		computeODPairs();
+
+		System.out.println(new Array2DRowRealMatrix(expandedODMatrices.get(450)).toString());
+		System.out.println(ODPairs.toString());
 
 	}
 
 	public void expandODMatrices(){
 
+		//start at the first timeSlice
 		int timeSliceNumber = 0;
-		
+
+		//a little error Tolerance is required in order to compare too doubles (foreseen representation errors of floating point)
+		double doubleErrorTolerance = 0.000001d;
+
 		//compute all odmatrices - note that we expect the tEnd to be a multiple of tStep
-		//TO DO add a check and possibly throw an exception to verify the above
+		//TO DO: add a check and possibly throw an exception
 		for(int i = 0; i < tEnd/tStep; i++){
-			
-			//we compute the corresponding ctime casting to float in order to avoid rounding errors
-			float ctime = (float) (tStep * i);
+
+			//with float our computations are precise enough and we avoid some imprecissions due to using double
+			double ctime = tStep * i;
 
 			RealMatrix expandedODMatrix;
 
@@ -46,11 +54,11 @@ public class TrafficSimulator {
 				expandedODMatrix = expandedODMatrix.scalarMultiply(tStep);
 			}
 			else{
-				
-				//check if we change timeslice at a time not multiple of the tStep - the first timeSlice is expected to be 0
-				//this is a mistake in the .mat
+
+				//check if we change timeslice at a time not multiple of the tStep
+				//the first timeSlice is expected to be 0 this is a mistake in the .mat
 				//TO DO change .mat or adapt code to more reasonable values
-				if((float)(ctime + tStep) > tfData.timeSlices.get(timeSliceNumber+1) && ctime !=0 ){
+				if((ctime + tStep) > tfData.timeSlices.get(timeSliceNumber+1) + doubleErrorTolerance && ctime !=0 ){
 
 					//part of the flow in the matrix is due to OD prior to timeSlice change
 					expandedODMatrix = new Array2DRowRealMatrix(tfData.ODMatrices.get(timeSliceNumber));
@@ -72,7 +80,34 @@ public class TrafficSimulator {
 					timeSliceNumber++;
 				}
 			}
-			expandedODMatrices.add(expandedODMatrix);
+			expandedODMatrices.add(expandedODMatrix.getData());
+		}
+
+	}
+
+	public void computeODPairs(){
+
+		for(int i=0; i<tfData.ODMatrices.size(); i++){
+			
+			//set current ODMatrix and dimensions
+			double[][] currMatrix = tfData.ODMatrices.get(i);
+			int NumColumns = currMatrix[0].length;
+			int NumRows = currMatrix.length;
+			
+			//visit all cells
+			for(int row=0; row<NumRows; row++  ){
+				for(int column=0; column<NumColumns; column++){
+					
+					//if cell is empty add the od pair to the set (avoids duplicates)
+					if(currMatrix[row][column] != 0){						
+						//save to the set of tuples
+						ODPairs.add(new TrafficODPair(tfData.nodes.get(row).id, tfData.nodes.get(column).id));
+
+					}
+
+				}
+			}
+
 		}
 
 	}
