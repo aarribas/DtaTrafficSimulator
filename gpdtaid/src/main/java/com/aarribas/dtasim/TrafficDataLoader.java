@@ -54,7 +54,7 @@ public class TrafficDataLoader {
 
 		//read each cell as an MLDouble, and read the value (get(0)) of the MLDouble
 		for(int i = 0; i < timeSlicesMLArray.size(); i++){
-			trafficData.timeSlices.add(((MLDouble) timeSlicesMLArray.get(i)).get(0));
+			trafficData.timeSlices.add(((MLDouble) timeSlicesMLArray.get(i)).get(0)); //TODO *1000 to justify
 		}
 
 	}

@@ -11,5 +11,10 @@
   		<artifactId>jmatio</artifactId>
   		<version>1</version>
   	</dependency>
+  	<dependency>
+  		<groupId>org.apache.commons</groupId>
+  		<artifactId>commons-math</artifactId>
+  		<version>2.2</version>
+  	</dependency>
   </dependencies>
 </project>
