@@ -13,6 +13,7 @@ public class TrafficSimulator {
 	private HashSet<TrafficODPair> ODPairs = new HashSet<TrafficODPair>();
 	private double tEnd;
 	private double tStep;
+	private ArrayList<double[]> linkTravelTimes = new ArrayList<double[]>();;
 
 	public TrafficSimulator(String fileName, double tEnd, double tStep){
 		this.tEnd = tEnd;
@@ -23,9 +24,13 @@ public class TrafficSimulator {
 
 		expandODMatrices();
 		computeODPairs();
+		computeInitialTravelTimes();
 
-		System.out.println(new Array2DRowRealMatrix(expandedODMatrices.get(450)).toString());
-		System.out.println(ODPairs.toString());
+//		System.out.println(new Array2DRowRealMatrix(expandedODMatrices.get(450)).toString());
+//		System.out.println(ODPairs.toString());
+//		for(int i = 0; i<linkTravelTimes.get(39).length; i++){
+//			System.out.println(i + "=" +linkTravelTimes.get(39)[i]);
+//		}
 
 	}
 
@@ -41,7 +46,6 @@ public class TrafficSimulator {
 		//TO DO: add a check and possibly throw an exception
 		for(int i = 0; i < tEnd/tStep; i++){
 
-			//with float our computations are precise enough and we avoid some imprecissions due to using double
 			double ctime = tStep * i;
 
 			RealMatrix expandedODMatrix;
@@ -88,16 +92,16 @@ public class TrafficSimulator {
 	public void computeODPairs(){
 
 		for(int i=0; i<tfData.ODMatrices.size(); i++){
-			
+
 			//set current ODMatrix and dimensions
 			double[][] currMatrix = tfData.ODMatrices.get(i);
 			int NumColumns = currMatrix[0].length;
 			int NumRows = currMatrix.length;
-			
+
 			//visit all cells
 			for(int row=0; row<NumRows; row++  ){
 				for(int column=0; column<NumColumns; column++){
-					
+
 					//if cell is empty add the od pair to the set (avoids duplicates)
 					if(currMatrix[row][column] != 0){						
 						//save to the set of tuples
@@ -109,6 +113,21 @@ public class TrafficSimulator {
 			}
 
 		}
+
+	}
+
+	public void computeInitialTravelTimes(){
+
+		for(TrafficLink link : tfData.links){
+			double[] travelTimes = new double[(int)(tEnd/tStep)];
+			
+			//we initialize traveltimes to length/freespeed
+			java.util.Arrays.fill(travelTimes, link.length/link.freeSpeed);	
+			
+			//add the corresponding array of traveltimes
+			linkTravelTimes.add(travelTimes);
+		}
+
 
 	}
 

@@ -18,5 +18,8 @@ public class TrafficLink {
 	public double capacity;
 	public double freeSpeed;
 	public double length;
+	public double w;
+	public double downStreamCumulative;
+	public double upStreamCumulative;
 
 }
