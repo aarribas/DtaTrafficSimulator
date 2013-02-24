@@ -10,7 +10,7 @@ public class TrafficSimulator {
 
 	private ArrayList<double[][]> expandedODMatrices = new ArrayList<double[][]>();
 	private TrafficData tfData = null;
-	private HashSet<TrafficODPair> ODPairs = new HashSet<TrafficODPair>();
+	private TrafficODPair[] ODPairs = null;
 	private double tEnd;
 	private double tStep;
 	private ArrayList<double[]> linkTravelTimes = new ArrayList<double[]>();;
@@ -90,6 +90,8 @@ public class TrafficSimulator {
 	}
 
 	public void computeODPairs(){
+		
+		HashSet<TrafficODPair> tempODPairs = new HashSet<TrafficODPair>();
 
 		for(int i=0; i<tfData.ODMatrices.size(); i++){
 
@@ -104,8 +106,8 @@ public class TrafficSimulator {
 
 					//if cell is empty add the od pair to the set (avoids duplicates)
 					if(currMatrix[row][column] != 0){						
-						//save to the set of tuples
-						ODPairs.add(new TrafficODPair(tfData.nodes.get(row).id, tfData.nodes.get(column).id));
+						//save to the set of tuples / same ODPair can only be added once
+						tempODPairs.add(new TrafficODPair(tfData.nodes.get(row).id, tfData.nodes.get(column).id));
 
 					}
 
@@ -113,6 +115,9 @@ public class TrafficSimulator {
 			}
 
 		}
+		
+		//save ODPairs to array.
+		ODPairs = (TrafficODPair[]) tempODPairs.toArray();
 
 	}
 

@@ -1,5 +1,8 @@
 package com.aarribas.dtasim;
 
+import java.util.ArrayList;
+
+
 public class TrafficODPair {
 	
 	public double x;
@@ -23,6 +26,29 @@ public class TrafficODPair {
 	@Override
 	public int hashCode(){
 		return new String(x + "," + y).hashCode();
+	}
+	
+	public int getIndexStartNode(ArrayList<TrafficNode> nodes){
+		
+		return getIndexOfNode(nodes, x);
+		
+	}
+	
+	public int getIndexEndNode(ArrayList<TrafficNode> nodes){
+		
+		return getIndexOfNode(nodes, y);
+		
+	}
+	
+	private int getIndexOfNode(ArrayList<TrafficNode> nodes,double id){
+		
+		for(int nodeIndex = 0; nodeIndex< nodes.size(); nodeIndex++){
+			if(nodes.get(nodeIndex).id == id){
+				return nodeIndex;
+			}
+		}
+		
+		return -1;
 	}
 
 }
