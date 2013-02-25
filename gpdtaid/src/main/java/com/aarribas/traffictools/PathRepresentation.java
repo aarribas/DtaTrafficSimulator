@@ -13,4 +13,22 @@ public class PathRepresentation {
 		this.linkIndexes = linkIndexes;
 	}
 	
+	public boolean equals(PathRepresentation pathRepresentation){
+		
+		if(nodeIndexes.length != pathRepresentation.nodeIndexes.length){
+			return false;
+		}
+		else{
+			
+			for(int i = 0; i<nodeIndexes.length; i++){
+				if(nodeIndexes[i] != pathRepresentation.nodeIndexes[i]){
+					return false;
+				}
+			}
+			
+		}
+		return true;
+		
+	}
+	
 }

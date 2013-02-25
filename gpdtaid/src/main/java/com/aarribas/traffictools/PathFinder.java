@@ -9,7 +9,7 @@ import com.aarribas.dtasim.TrafficODPair;
 public abstract class PathFinder {
 	
 	protected ArrayList<ArrayList<PathRepresentation>> routes = null;
-	protected ArrayList<ArrayList<Integer>>  routeFractions = null;
+	protected ArrayList<ArrayList<Integer[]>>  routeFractions = null;
 	protected TrafficData tfData;
 	protected TrafficODPair[] ODPairs; 
 	protected double tEnd, tStep;
@@ -31,7 +31,7 @@ public abstract class PathFinder {
 		
 		//initialise empty routes and routeFractions
 		this.routes = new ArrayList<ArrayList<PathRepresentation>>();
-		this.routeFractions = new ArrayList<ArrayList<Integer>>();
+		this.routeFractions = new ArrayList<ArrayList<Integer[]>>();
 	}
 	
 	public PathFinder(TrafficData tfData, TrafficODPair[] ODPairs,double[] travelCosts, double tEnd, double tStep,int timeClicksShift, int timeClicksOfRouteInterval, routeIntervalOption option) {
@@ -51,7 +51,7 @@ public abstract class PathFinder {
 		return routes;
 	}
 	
-	private ArrayList<ArrayList<Integer>> getRouteFractions(){
+	private ArrayList<ArrayList<Integer[]>> getRouteFractions(){
 		return routeFractions;
 	}
 
