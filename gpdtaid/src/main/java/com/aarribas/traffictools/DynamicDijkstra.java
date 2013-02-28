@@ -260,7 +260,7 @@ public class DynamicDijkstra extends PathFinder {
 						}	
 
 						//compute the complete travel time at time departureTime + minDistance
-						double completeTravelTime = computeTravelTime(departureTime + distances[indexMinNode]);
+						double completeTravelTime = TravelTimeManager.computeTravelTimeForGivenCost(travelCosts, departureTime + distances[indexMinNode], tEnd, tStep);
 
 						if((completeTravelTime + distances[indexMinNode]) < distances[neighborgNodeIndex]){
 							distances[neighborgNodeIndex] = distances[indexMinNode];
@@ -322,34 +322,5 @@ public class DynamicDijkstra extends PathFinder {
 		}
 
 		return linkIndexes;
-	}
-
-	private double computeTravelTime(double t){
-
-		//index of the timeStep (time click) prior to t
-		int indexTimeBefore = ((int)(t/tStep));
-
-
-		if(indexTimeBefore + 1 == travelCosts.length){
-			//if we have passed the last time click the travelTime is the last travel time
-			//as in matlab code.
-			return travelCosts[travelCosts.length-1];
-		}
-		else{
-
-			//proportion of time between t and previous time click
-			double tBetween  = (t - (indexTimeBefore * tStep)) / tStep;
-
-			//should always work if I have an exception here I made the wrong assumption regarding possible indexTimeBefore
-
-			if(travelCosts[indexTimeBefore] == Double.MAX_VALUE){
-				return Double.MAX_VALUE;
-			}
-			else{
-				return travelCosts[indexTimeBefore] + tBetween * (travelCosts[indexTimeBefore + 1] - travelCosts[indexTimeBefore]);	
-			}
-
-		}
-
 	}
 }

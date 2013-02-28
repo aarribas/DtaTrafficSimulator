@@ -42,6 +42,8 @@ public class TrafficODPair {
 	
 	private int getIndexOfNode(ArrayList<TrafficNode> nodes,double id){
 		
+		//TODO change this logic -- it is extremely inneficient possib build a hashmap conveing this kind of info at TrafficSim level
+		
 		for(int nodeIndex = 0; nodeIndex< nodes.size(); nodeIndex++){
 			if(nodes.get(nodeIndex).id == id){
 				return nodeIndex;

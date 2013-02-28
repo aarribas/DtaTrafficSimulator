@@ -47,12 +47,13 @@ public abstract class PathFinder {
 	
 	abstract public void findPath();
 	
-	private ArrayList<ArrayList<PathRepresentation>> getRoute(){
+	public ArrayList<ArrayList<PathRepresentation>> getRoutes(){
 		return routes;
 	}
 	
-	private ArrayList<ArrayList<Integer[]>> getRouteFractions(){
+	public ArrayList<ArrayList<Integer[]>> getRouteFractions(){
 		return routeFractions;
 	}
+
 
 }
