@@ -288,10 +288,10 @@ public class TrafficSimulator {
 					}
 					else{
 						//otherwise the turningFraction is the turningFraction already computed at prevTimeClick
+						//TODO check if there are no dimensionality problems here
 						for(int j = prevTimeClick+1; j<timeClick; j++){
-							for(int column = 0; column<turningFractions.get(nodeIndex).get(timeClick)[row].length; column++){
-								turningFractions.get(nodeIndex).get(j)[row][column] = turningFractions.get(nodeIndex).get(prevTimeClick)[row][column];
-							}
+								turningFractions.get(nodeIndex).get(j)[row] = turningFractions.get(nodeIndex).get(prevTimeClick)[row].clone();
+							
 
 						}
 
@@ -316,7 +316,7 @@ public class TrafficSimulator {
 					//set tclick turningfraction equal to previous turning fraction
 					//if the turning fraction for that prevtimeclick then it will be empty for tclick too
 					if(turningFractions.get(nodeIndex).contains(prevTimeClick)){
-						turningFractions.get(nodeIndex).add(tClick,turningFractions.get(nodeIndex).get(prevTimeClick).clone() );
+						turningFractions.get(nodeIndex).add(tClick,turningFractions.get(nodeIndex).get(prevTimeClick).clone());
 					}
 				}
 				

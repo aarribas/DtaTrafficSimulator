@@ -8,9 +8,13 @@ public class TravelTimeManager {
 	
 	public static double computeTravelTimeForGivenCost(double[] travelCosts, double t, double tEnd, double tStep){
 
+		//if t is beyond the simulation time, return the last travelcost
+		if(t>tEnd){
+			return travelCosts[travelCosts.length];
+		}
+		
 		//index of the timeStep (time click) prior to t
 		int indexTimeBefore = ((int)(t/tStep));
-
 
 		if(indexTimeBefore + 1 == travelCosts.length){
 			//if we have passed the last time click the travelTime is the last travel time
@@ -44,27 +48,43 @@ public class TravelTimeManager {
 			double[] travelCost = speeds.get(i);
 			
 			for(int j =0; j< travelCost.length; j++){
-				travelCost[j] = links.get(i).length / travelCost[j];
+				if(travelCost[j] == 0){
+					
+					travelCost[j] = Double.MAX_VALUE;
+				}
+				else if(travelCost[j] == Double.MAX_VALUE){
+					
+					travelCost[j] = 0;
+				}
+				else{
+					travelCost[j] = links.get(i).length / travelCost[j];
+				}
+				
 			}
 			//add the travelcost
 			travelCosts.add(travelCost);
 		}
 		
 		return travelCosts;
-		 
-		
 	}
 	
 	public static double computeTravelTimeNode2NodeForGivenCost(ArrayList<double[]> travelCosts, int[] linkIndexes, int startIndex, int endIndex, double timeClick, double tEnd, double tStep){
 		
-		double travelTime =0;
+		double travelTime = 0;
 		
 		//this is taken adapted directly from matlab code. TODO verify the correctness of visiting the route this way.
 		for(int i = startIndex; i>endIndex-1; i--){
 			int linkIndex = linkIndexes[i];
 			
 			//get traveltime along the link
-			travelTime = travelTime + computeTravelTimeForGivenCost(travelCosts.get(linkIndex), timeClick*tStep - travelTime , tEnd, tStep);
+			double travelTimeForCost = computeTravelTimeForGivenCost(travelCosts.get(linkIndex), timeClick*tStep - travelTime , tEnd, tStep);
+			if(travelTimeForCost == Double.MAX_VALUE){
+				travelTime  = Double.MAX_VALUE;
+			}
+			else{
+				travelTime = travelTime + travelTimeForCost;
+			}
+			
 		}
 		
 		return travelTime;
