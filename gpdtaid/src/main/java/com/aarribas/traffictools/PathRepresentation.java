@@ -1,5 +1,7 @@
 package com.aarribas.traffictools;
 
+import java.util.Arrays;
+
 public class PathRepresentation {
 	
 	//represent the path as an array of node indexes
@@ -67,4 +69,9 @@ public class PathRepresentation {
 		
 	}
 	
+	@Override
+	public String toString(){
+		return "nodesIndexes: " + Arrays.toString(nodeIndexes) + "\n" +
+		"linkIndexes: " + Arrays.toString(linkIndexes); 
+	}
 }

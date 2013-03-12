@@ -9,14 +9,12 @@ import java.util.Arrays;
 
 public class DynamicDijkstra extends PathFinder {
 
-
-	public DynamicDijkstra(TrafficData tfData, TrafficODPair[] ODPairs,double[] travelCosts, double tEnd, double tStep, int timeClicksShift, int timeClicksOfRouteInterval) {
+	public DynamicDijkstra(TrafficData tfData, TrafficODPair[] ODPairs,ArrayList<double[]> travelCosts, double tEnd, double tStep, int timeClicksShift, int timeClicksOfRouteInterval) {
 		super(tfData, ODPairs, travelCosts, tEnd, tStep, timeClicksShift, timeClicksOfRouteInterval);
 	}
 
 	@Override
 	public void findPath(){
-
 		if(routes.isEmpty()){
 
 			//look for a path for each od pair per routeInterval
@@ -25,6 +23,8 @@ public class DynamicDijkstra extends PathFinder {
 				//we start at the interval 0
 				int interval = 0;
 				int timeClick = timeClicksShift + timeClicksOfRouteInterval*interval; //equals timeClickShift of course
+
+				boolean routeDataSavedForODPair = false;
 
 				while( timeClick < (int) (tEnd/tStep)){
 
@@ -36,18 +36,23 @@ public class DynamicDijkstra extends PathFinder {
 					int[] parents = computeParents(indexStartNode, departureTime );
 
 					//compute node indexes of nodes that form the path
-					Integer[] pathNodeIndexes = (Integer[]) computeNodeIndexesInPath(indexStartNode, indexEndNode, parents).toArray();
+					Integer[] pathNodeIndexes = new Integer[0];
+					pathNodeIndexes = computeNodeIndexesInPath(indexStartNode, indexEndNode, parents).toArray(pathNodeIndexes);
+
 
 					//compute link indexes of links that form the path
 					int[] pathLinkIndexes = computeLinkIndexesInPath(pathNodeIndexes);
 
-					//save the corresponding path representation
-					addPathRepresentation(odIndex,new PathRepresentation(pathNodeIndexes, pathLinkIndexes));
+					if(!routeDataSavedForODPair){
+						//save the corresponding path representation
+						addPathRepresentation(odIndex,new PathRepresentation(pathNodeIndexes, pathLinkIndexes));
 
-					//save the routefraction too
-					Integer[] routeFraction = new Integer[(int) (tEnd/tStep)];
-					Arrays.fill(routeFraction, 1);
-					addRouteFraction(odIndex, routeFraction);
+						//save the routefraction too
+						Integer[] routeFraction = new Integer[(int) (tEnd/tStep)];
+						Arrays.fill(routeFraction, 1);
+						addRouteFraction(odIndex, routeFraction);
+						routeDataSavedForODPair = true;
+					}
 
 					//move to the next route interval
 					interval++;
@@ -59,6 +64,7 @@ public class DynamicDijkstra extends PathFinder {
 		}
 		else{
 
+
 			//look for a path for each od pair per routeInterval
 			for(int odIndex = 0; odIndex < ODPairs.length; odIndex++){
 
@@ -67,7 +73,7 @@ public class DynamicDijkstra extends PathFinder {
 				int interval = 0;
 				int timeClick = timeClicksShift + timeClicksOfRouteInterval*interval; //equals timeClickShift of course
 				int shortestRouteIndex = 0;
-				
+
 				while( timeClick < (int) (tEnd/tStep)){
 
 					double departureTime = (timeClick - timeClicksOfAdditionalRouteInterval) * tStep;
@@ -78,13 +84,15 @@ public class DynamicDijkstra extends PathFinder {
 					int[] parents = computeParents(indexStartNode, departureTime );
 
 					//compute node indexes of nodes that form the path
-					Integer[] pathNodeIndexes = (Integer[]) computeNodeIndexesInPath(indexStartNode, indexEndNode, parents).toArray();
+					Integer[] pathNodeIndexes = new Integer[0];
+					pathNodeIndexes = computeNodeIndexesInPath(indexStartNode, indexEndNode, parents).toArray(pathNodeIndexes);
+
 
 					//compute link indexes of links that form the path
 					int[] pathLinkIndexes = computeLinkIndexesInPath(pathNodeIndexes);
-					
+
 					boolean routeAlreadyFound = false;
-					
+
 					if(routes.get(odIndex).isEmpty()){
 						//save the corresponding path representation
 						addPathRepresentation(odIndex,new PathRepresentation(pathNodeIndexes, pathLinkIndexes));
@@ -96,7 +104,7 @@ public class DynamicDijkstra extends PathFinder {
 					}
 					else{
 						PathRepresentation tempPathRepresentation = new PathRepresentation(pathNodeIndexes, pathLinkIndexes);
-						
+
 						//compare to each route for that odpair
 						for(int routeIndex = 0; routeIndex < routes.get(odIndex).size(); routeIndex++){
 							if(tempPathRepresentation.equals(routes.get(odIndex).get(routeIndex))){
@@ -110,16 +118,16 @@ public class DynamicDijkstra extends PathFinder {
 						if(!routeAlreadyFound){
 							//we found a new route, add the route to the list of routes
 							addPathRepresentation(odIndex, tempPathRepresentation);
-							
+
 							//move the index pointing to the shortest route
 							shortestRouteIndex = routes.get(odIndex).size() -1;
-							
+
 							//add routefractions to 0
 							Integer[] routeFraction = new Integer[(int) (tEnd/tStep)];
 							Arrays.fill(routeFraction, 0);
 							addRouteFraction(odIndex, routeFraction);
 						}
-						
+
 						//updated routeFractions accordingly
 						for(int routeFractionIndex = 0; routeFractionIndex<routeFractions.get(odIndex).size(); routeFractionIndex++){
 							if(routeFractionIndex == shortestRouteIndex){
@@ -132,7 +140,7 @@ public class DynamicDijkstra extends PathFinder {
 						//move to the next relevant time click in term of routeIntervals
 						previousTimeClick = timeClick + 1;	
 					}
-					
+
 					//fix route fractions till last timeclick
 					for(int routeFractionIndex = 0; routeFractionIndex<routeFractions.get(odIndex).size(); routeFractionIndex++){
 						if(routeFractionIndex == shortestRouteIndex){
@@ -149,15 +157,14 @@ public class DynamicDijkstra extends PathFinder {
 				}
 			}
 		}
-
+		
 	}
 
 	private void addPathRepresentation(int odIndex, PathRepresentation pathRepresentation){
 
 		//TODO improve this part - it should be possible to use one single add.
-
-		//if no routes, prepare to add the first one
-		if(routes.isEmpty())
+		//if no routes for index increment the size	
+		if (odIndex <= routes.size())
 		{
 			routes.add(new ArrayList<PathRepresentation>());
 		}
@@ -177,8 +184,8 @@ public class DynamicDijkstra extends PathFinder {
 
 		//TODO improve this part - it should be possible to use one single add.
 
-		//if no routeFractions, prepare to add the first one
-		if(routeFractions.isEmpty())
+		//if no routes for index increment the size	
+		if (odIndex <= routeFractions.size())
 		{
 			routeFractions.add(new ArrayList<Integer[]>());
 		}
@@ -207,7 +214,7 @@ public class DynamicDijkstra extends PathFinder {
 
 		//initialization to default values
 		Arrays.fill(visited, false);
-		Arrays.fill(parents, 0);
+		Arrays.fill(parents, -1); //-1 used for "no parent"
 		Arrays.fill(distances, Double.MAX_VALUE);
 
 		distances[source] = 0;
@@ -233,7 +240,7 @@ public class DynamicDijkstra extends PathFinder {
 			double minDistance = tempDistances[0];
 			int indexMinNode = 0;
 			for(int indexCandidateMin = 0; indexCandidateMin<numNodes; indexCandidateMin++){
-				if(tempDistances[indexCandidateMin]<minDistance){
+				if(tempDistances[indexCandidateMin]< minDistance){
 					minDistance = tempDistances[indexCandidateMin];
 					indexMinNode = indexCandidateMin;
 				}
@@ -241,7 +248,6 @@ public class DynamicDijkstra extends PathFinder {
 
 			//flag it as visited
 			visited[indexMinNode] = true;
-
 
 			//check for connecting links -- note that the current code only works for fully connected networks.
 			for(int linkIndex = 0; linkIndex < numLinks; linkIndex++){
@@ -257,17 +263,18 @@ public class DynamicDijkstra extends PathFinder {
 						if(tfData.nodes.get(i).id == link.endNode){
 							neighborgNodeIndex = i;
 							break;
-						}	
-
-						//compute the complete travel time at time departureTime + minDistance
-						double completeTravelTime = TravelTimeManager.computeTravelTimeForGivenCost(travelCosts, departureTime + distances[indexMinNode], tEnd, tStep);
-
-						if((completeTravelTime + distances[indexMinNode]) < distances[neighborgNodeIndex]){
-							distances[neighborgNodeIndex] = distances[indexMinNode];
-							parents[neighborgNodeIndex] = indexMinNode;
 						}
+					}	
 
+					double completeTravelTime = TravelTimeManager.computeTravelTimeForGivenCost(travelCosts.get(linkIndex), departureTime + distances[indexMinNode], tEnd, tStep);
+				
+					if((completeTravelTime + distances[indexMinNode]) < distances[neighborgNodeIndex]){
+						//System.out.println("updated");
+						distances[neighborgNodeIndex] = distances[indexMinNode] + completeTravelTime;
+						parents[neighborgNodeIndex] = indexMinNode;
 					}
+
+
 				}
 
 			}

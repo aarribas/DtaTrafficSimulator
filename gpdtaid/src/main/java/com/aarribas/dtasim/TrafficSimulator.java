@@ -8,6 +8,7 @@ import java.util.HashSet;
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.RealMatrix;
 
+import com.aarribas.traffictools.DynamicDijkstra;
 import com.aarribas.traffictools.PathFinder;
 import com.aarribas.traffictools.PathRepresentation;
 import com.aarribas.traffictools.TravelTimeManager;
@@ -34,7 +35,12 @@ public class TrafficSimulator {
 		expandODMatrices();
 		computeODPairs();
 		computeInitialTravelTimes();
-
+		
+		pathFinder = new DynamicDijkstra(tfData, ODPairs, linkTravelTimes, tEnd, tStep, 0, 100);
+		System.out.println("finding path");
+		pathFinder.findPath();
+		System.out.println("path was found");
+		
 		//		System.out.println(new Array2DRowRealMatrix(expandedODMatrices.get(450)).toString());
 		//		System.out.println(ODPairs.toString());
 		//		for(int i = 0; i<linkTravelTimes.get(39).length; i++){
@@ -125,9 +131,10 @@ public class TrafficSimulator {
 			}
 
 		}
-
+		
 		//save ODPairs to array.
-		ODPairs = (TrafficODPair[]) tempODPairs.toArray();
+		ODPairs = new TrafficODPair[tempODPairs.size()];
+		tempODPairs.toArray(ODPairs);
 
 	}
 

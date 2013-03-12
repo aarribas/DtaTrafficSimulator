@@ -1,8 +1,6 @@
 package com.aarribas.traffictools;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-
 import com.aarribas.dtasim.TrafficData;
 import com.aarribas.dtasim.TrafficODPair;
 
@@ -14,16 +12,16 @@ public abstract class PathFinder {
 	protected TrafficODPair[] ODPairs; 
 	protected double tEnd, tStep;
 	protected int timeClicksOfRouteInterval, timeClicksOfAdditionalRouteInterval, timeClicksShift;
-	protected double[] travelCosts;
+	protected ArrayList<double[]> travelCosts;
 	
 	enum routeIntervalOption{LAST_OUT, FIRST_IN};
 
-	public PathFinder(TrafficData tfData, TrafficODPair[] ODPairs,double[] travelCosts, double tEnd, double tStep,int timeClicksShift, int timeClicksOfRouteInterval) {
-		this.tfData = tfData;
+	public PathFinder(TrafficData tfData, TrafficODPair[] ODPairs, ArrayList<double[]> travelCosts, double tEnd, double tStep,int timeClicksShift, int timeClicksOfRouteInterval) {
+		this.tfData = tfData; 
 		this.ODPairs = ODPairs;
 		this.travelCosts = travelCosts;
 		this.tEnd = tEnd;
-		this.tStep = tEnd;
+		this.tStep = tStep;
 		this.timeClicksOfRouteInterval = timeClicksOfRouteInterval;
 		//default is option LAST_OUT hence:
 		this.timeClicksOfAdditionalRouteInterval = 0;
@@ -34,7 +32,7 @@ public abstract class PathFinder {
 		this.routeFractions = new ArrayList<ArrayList<Integer[]>>();
 	}
 	
-	public PathFinder(TrafficData tfData, TrafficODPair[] ODPairs,double[] travelCosts, double tEnd, double tStep,int timeClicksShift, int timeClicksOfRouteInterval, routeIntervalOption option) {
+	public PathFinder(TrafficData tfData, TrafficODPair[] ODPairs, ArrayList<double[]> travelCosts, double tEnd, double tStep,int timeClicksShift, int timeClicksOfRouteInterval, routeIntervalOption option) {
 		this(tfData, ODPairs, travelCosts, tEnd, tStep, timeClicksShift, timeClicksOfRouteInterval);
 		switch(option){
 		case FIRST_IN:

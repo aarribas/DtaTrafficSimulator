@@ -1,6 +1,7 @@
 package com.aarribas.traffictools;
 
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import com.aarribas.dtasim.TrafficLink;
 
@@ -8,18 +9,15 @@ public class TravelTimeManager {
 	
 	public static double computeTravelTimeForGivenCost(double[] travelCosts, double t, double tEnd, double tStep){
 
-		//if t is beyond the simulation time, return the last travelcost
-		if(t>tEnd){
-			return travelCosts[travelCosts.length];
-		}
+		double travelCost; 
 		
 		//index of the timeStep (time click) prior to t
 		int indexTimeBefore = ((int)(t/tStep));
 
-		if(indexTimeBefore + 1 == travelCosts.length){
+		if(indexTimeBefore > travelCosts.length - 1){
 			//if we have passed the last time click the travelTime is the last travel time
 			//as in matlab code.
-			return travelCosts[travelCosts.length-1];
+			travelCost = travelCosts[travelCosts.length-1];
 		}
 		else{
 
@@ -28,14 +26,23 @@ public class TravelTimeManager {
 
 			//should always work if I have an exception here I made the wrong assumption regarding possible indexTimeBefore
 
-			if(travelCosts[indexTimeBefore] == Double.MAX_VALUE){
-				return Double.MAX_VALUE;
+			if(travelCosts[indexTimeBefore] == Double.MAX_VALUE ){
+				travelCost =  Double.MAX_VALUE;
 			}
 			else{
-				return travelCosts[indexTimeBefore] + tBetween * (travelCosts[indexTimeBefore + 1] - travelCosts[indexTimeBefore]);	
+				travelCost = travelCosts[indexTimeBefore] + tBetween * (travelCosts[indexTimeBefore + 1] - travelCosts[indexTimeBefore]);	
 			}
 
 		}
+		
+//		System.out.println(indexTimeBefore);
+//		System.out.println(indexTimeBefore + 1);
+//		System.out.println(travelCost);
+//		Scanner scan = new Scanner(System.in);
+//		scan.nextLine();
+		return travelCost;
+		
+	
 
 	}
 	
