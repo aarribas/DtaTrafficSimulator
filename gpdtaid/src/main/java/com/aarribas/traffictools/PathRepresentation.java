@@ -59,7 +59,8 @@ public class PathRepresentation {
 	public boolean isBorderNode(int nodeIndex){
 		
 		//it is a border node if the index matches with the first node index or the last one
-		if(nodeIndexes[0] == nodeIndex || nodeIndexes[nodeIndexes.length] == nodeIndex){
+
+		if(nodeIndexes[0] == nodeIndex || nodeIndexes[nodeIndexes.length-1] == nodeIndex){
 			return true;
 		}
 		else{

@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Scanner;
 
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.RealMatrix;
+import org.apache.commons.math.linear.RealVector;
 
 import com.aarribas.traffictools.DynamicDijkstra;
 import com.aarribas.traffictools.PathFinder;
@@ -35,12 +37,46 @@ public class TrafficSimulator {
 		expandODMatrices();
 		computeODPairs();
 		computeInitialTravelTimes();
-		
+		computeInitialSpeeds();
+
 		pathFinder = new DynamicDijkstra(tfData, ODPairs, linkTravelTimes, tEnd, tStep, 0, 100);
-		System.out.println("finding path");
 		pathFinder.findPath();
-		System.out.println("path was found");
+
+		computeTurningFractions(100, 0, linkSpeeds);
 		
+//		//code to debug computeTurningFractions
+//		int index = 0;
+//
+//		for(ArrayList<double[][]> turningFraction : turningFractions){
+//			System.out.println(index);
+//			if(!turningFraction.isEmpty()){
+//				System.out.println("NOT EMPTY");
+//				int index2 = 0;
+//				for(double[][] turFrac: turningFraction){
+//					String newS = new String();
+//
+//					for(double[] turFracR : turFrac){
+//						newS = newS.concat(Arrays.toString(turFracR) + index2);
+//					}
+//					index2++;
+//					System.out.println(newS);
+//				}
+//			}
+//			else{
+//				System.out.println("EMPTY");
+//			}
+//
+//
+//			if(index == 11 || index == 7 || index == 10){
+//
+//				Scanner scan = new Scanner(System.in);
+//				scan.nextLine();
+//
+//			}
+//			index++;
+//
+//		}
+
 		//		System.out.println(new Array2DRowRealMatrix(expandedODMatrices.get(450)).toString());
 		//		System.out.println(ODPairs.toString());
 		//		for(int i = 0; i<linkTravelTimes.get(39).length; i++){
@@ -131,7 +167,7 @@ public class TrafficSimulator {
 			}
 
 		}
-		
+
 		//save ODPairs to array.
 		ODPairs = new TrafficODPair[tempODPairs.size()];
 		tempODPairs.toArray(ODPairs);
@@ -170,10 +206,11 @@ public class TrafficSimulator {
 
 	private void computeTurningFractions(int timeClicksOFTurningFractionsInterval, int timeClicksShift, ArrayList<double[]> currentLinkSpeeds){
 
-		//prepate the turningFractions structure of size nodes x time steps
-		turningFractions= new ArrayList<ArrayList<double[][]>>(tfData.nodes.size());
-		for(ArrayList<double[][]> turningFraction : turningFractions){
-			turningFraction = new ArrayList<double[][]>((int) (tEnd/tStep));
+		//prepare the turningFractions structure of size nodes x time steps
+		turningFractions= new ArrayList<ArrayList<double[][]>>();
+
+		for(int tfIndex = 0; tfIndex< tfData.nodes.size(); tfIndex++){
+			turningFractions.add(new ArrayList<double[][]>((int) (tEnd/tStep)));
 		}
 
 		//intialise the previous time click to 0
@@ -196,16 +233,26 @@ public class TrafficSimulator {
 
 			for(int nodeIndex = 0; nodeIndex < tfData.nodes.size(); nodeIndex++){
 				TrafficNode currNode = tfData.nodes.get(nodeIndex);
-				
+				System.out.println("current iter " + nodeIndex + "time " + timeClick);
+
 				//if there are incoming links and outgoing links for this node, initialise the turning fractions accordingly
-				if(incomingLinkIndexes.containsKey(nodeIndex) && outgoingLinkIndexes.containsKey(nodeIndex))
+				if(incomingLinkIndexes.containsKey(currNode.id) && outgoingLinkIndexes.containsKey(currNode.id))
 				{
 					double[][] turningFraction = new double[incomingLinkIndexes.get(currNode.id).size()][outgoingLinkIndexes.get(currNode.id).size()];
-					Arrays.fill(turningFraction, 0); 
-					turningFractions.get(nodeIndex).add(timeClick, turningFraction);
+					for(double[] row : turningFraction){
+						Arrays.fill(row, 0);
+					}
+
+					//fill from the previous timeclick to current timeclick - 1 with turningFraction
+					for(int j = prevTimeClick+1; j <timeClick; j++){
+						turningFractions.get(nodeIndex).add(turningFraction);
+					}
+					//fill the current timeclick with turningFraction
+					turningFractions.get(nodeIndex).add(turningFraction);
+
 				}
-				
-				
+
+
 				for(int setOfRoutesIndex = 0; setOfRoutesIndex < pathFinder.getRoutes().size(); setOfRoutesIndex++){
 
 					//extract set of routes 
@@ -225,15 +272,13 @@ public class TrafficSimulator {
 						}
 						else{
 
-
-
 							//compute current travel time node 2 node
 							double travelTime = TravelTimeManager.computeTravelTimeNode2NodeForGivenCost(currTravelCosts, route.linkIndexes, indexNodeInRoute -1, 1, timeClick, tEnd, tStep);
 
 							//compute starting time for the corresponding OD flow
 							double timeStartODFlow = tStep*timeClick - travelTime;
 							int timeClickStartODFlow = (int)(timeStartODFlow/tStep);
-							if(timeStartODFlow > tEnd){
+							if(timeStartODFlow < 0){
 								//nothing to do 
 								//flow can only get here if it started before the start of the simulation
 							}
@@ -262,10 +307,12 @@ public class TrafficSimulator {
 								//compute turningFractions for the current node and time click
 								//Remark: turning Fraction = given turning fractino + route Fraction + flow according to ODMatrix
 								//TODO Review in Cascetta's book
+
 								turningFractions.get(nodeIndex).get(timeClick)[incomingLinkPathIndex][outgoingLinkPathIndex] 
 										= turningFractions.get(nodeIndex).get(timeClick)[incomingLinkPathIndex][outgoingLinkPathIndex]
 												+ pathFinder.getRouteFractions().get(setOfRoutesIndex).get(routeIndex)[timeClick]
 														* expandedODMatrices.get(timeClickStartODFlow)[ODPairs[setOfRoutesIndex].getIndexStartNode(tfData.nodes)][ODPairs[setOfRoutesIndex].getIndexEndNode(tfData.nodes)];
+
 							}
 
 
@@ -275,65 +322,73 @@ public class TrafficSimulator {
 
 				}//end for visiting sets of routes
 
-				for(int row = 0; row> turningFractions.get(nodeIndex).get(timeClick).length; row++){
+				//set turning fractions for previous time step - only if the node is not a border node (hence not empty)
+				if(!turningFractions.get(nodeIndex).isEmpty()){
+					RealMatrix tempMatrix = new Array2DRowRealMatrix(turningFractions.get(nodeIndex).get(timeClick));
 
-					//compute the sum of turningFraction for a row
-					double sumTF = 0;
-					for(int column = 0; column<turningFractions.get(nodeIndex).get(timeClick)[row].length; column++){
-						sumTF = sumTF + turningFractions.get(nodeIndex).get(timeClick)[row][column];
+					boolean zeroTF = true;
+					
+					for(int row = 0; row< turningFractions.get(nodeIndex).get(timeClick).length; row++){
+						double sumTF = 0;
+						//compute the sum of turningFraction for a row
+						for(int column = 0; column<turningFractions.get(nodeIndex).get(timeClick)[row].length; column++){
+
+							sumTF = sumTF + turningFractions.get(nodeIndex).get(timeClick)[row][column];
+						}
+
+						if(sumTF>0){
+							RealVector vect= tempMatrix.getRowVector(row);
+							tempMatrix.setRowVector(row, vect.mapDivide(sumTF));
+							zeroTF = false;
+						}
+
 					}
-
-					//if the sum of the turning fractions turns out to be positive, we normalise
-					if(sumTF>0){
-						//for each time click between prevTimeClick and (current) timeClick we divide each turning Fraction entry by the sum (normalisation)
-						for(int j = prevTimeClick+1; j<timeClick; j++){
-							for(int column = 0; column<turningFractions.get(nodeIndex).get(timeClick)[row].length; column++){
-								turningFractions.get(nodeIndex).get(j)[row][column] = turningFractions.get(nodeIndex).get(j)[row][column]/sumTF;
-							}
-
+					
+					//udpate turning fractions from previous time click to current
+					if(!zeroTF){
+						//if the turning fraction is not zero update turning fractions with new value
+						for(int j = prevTimeClick+1; j<timeClick+1; j++){
+							turningFractions.get(nodeIndex).set(j, tempMatrix.getData());
 						}
 					}
 					else{
-						//otherwise the turningFraction is the turningFraction already computed at prevTimeClick
-						//TODO check if there are no dimensionality problems here
-						for(int j = prevTimeClick+1; j<timeClick; j++){
-								turningFractions.get(nodeIndex).get(j)[row] = turningFractions.get(nodeIndex).get(prevTimeClick)[row].clone();
-							
+						//otherwise update with the previous turning fraction value
+						for(int j = prevTimeClick+1; j<timeClick+1; j++){
+							turningFractions.get(nodeIndex).set(j, turningFractions.get(nodeIndex).get(prevTimeClick));;
+							//probably nothing to do if sumTF<0 -- double check
+
 
 						}
 
-
 					}
-
 
 				}
 
-				//save current time click as prevTimeClick
-				prevTimeClick = timeClick;
 
 			}//end for visiting nodes
-				
-			//for all  time clicks between prev and current timeclick fix the turningFractions to the ones at prevTimeClick
-			//this is required to fix the turning fractions for the final routeInterval (from preTimeClick till end of time)
-			//TODO VERIFY THERE IS NO INITIALISATION PROBLEM HERE
-			for(int tClick=prevTimeClick+1; tClick<(int)(tEnd/tStep); tClick++){
-				
-				for(int nodeIndex = 0; nodeIndex < turningFractions.size(); nodeIndex++){
-					
-					//set tclick turningfraction equal to previous turning fraction
-					//if the turning fraction for that prevtimeclick then it will be empty for tclick too
-					if(turningFractions.get(nodeIndex).contains(prevTimeClick)){
-						turningFractions.get(nodeIndex).add(tClick,turningFractions.get(nodeIndex).get(prevTimeClick).clone());
-					}
-				}
-				
-			}
-			
+
+			//save current time click as prevTimeClick
+			prevTimeClick = timeClick;
+
 			///move to the next route interval
 			interval++;
 			timeClick = timeClicksShift + timeClicksOFTurningFractionsInterval*interval; 
-		
+
 		}//end of while
+
+		//for all  time clicks between prev and current timeclick fix the turningFractions to the ones at prevTimeClick
+		//this is required to fix the turning fractions for the final routeInterval (from preTimeClick till end of time)
+		for(int tClick=prevTimeClick+1; tClick<(int)(tEnd/tStep); tClick++){
+
+			for(int nodeIndex = 0; nodeIndex < turningFractions.size(); nodeIndex++){
+
+				if(!turningFractions.get(nodeIndex).isEmpty()){
+					turningFractions.get(nodeIndex).add(turningFractions.get(nodeIndex).get(prevTimeClick));
+				}
+			}
+
+		}
+
 
 	}
 
