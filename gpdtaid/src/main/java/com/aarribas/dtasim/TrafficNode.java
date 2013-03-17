@@ -1,5 +1,7 @@
 package com.aarribas.dtasim;
 
+import java.util.ArrayList;
+
 /**
  * @author andresaan
  *
@@ -13,7 +15,7 @@ public class TrafficNode {
 	public double id;
 	public double x;
 	public double y;
-	public double outgoingLinks;
-	public double incomingLinks;
+	public ArrayList<TrafficLink> outgoingLinks;
+	public ArrayList<TrafficLink> incomingLinks;
 
 }

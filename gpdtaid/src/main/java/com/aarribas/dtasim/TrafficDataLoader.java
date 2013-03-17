@@ -73,25 +73,6 @@ public class TrafficDataLoader {
 			tempNode.x = ((MLDouble) nodeinfo.getField("x", i)).get(0);
 			tempNode.y = ((MLDouble) nodeinfo.getField("y", i)).get(0);
 
-			//save number of outgoingLinks - can be empty in .mat hence saved as 0
-			if(!nodeinfo.getField("outgoingLinks", i).isEmpty())
-			{
-				tempNode.outgoingLinks = ((MLDouble) nodeinfo.getField("outgoingLinks", i)).get(0);
-			}
-			else
-			{
-				tempNode.outgoingLinks = 0;
-			}
-
-			//save number of incomingLinks - can be empty in .mat hence saved as 0
-			if(!nodeinfo.getField("incomingLinks", i).isEmpty())
-			{
-				tempNode.incomingLinks = ((MLDouble) nodeinfo.getField("incomingLinks", i)).get(0);
-			}
-			else
-			{
-				tempNode.incomingLinks = 0;
-			}
 			trafficData.nodes.add(tempNode);
 		}
 

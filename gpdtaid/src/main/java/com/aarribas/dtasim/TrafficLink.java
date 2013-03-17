@@ -19,7 +19,10 @@ public class TrafficLink {
 	public double freeSpeed;
 	public double length;
 	public double w;
-	public double downStreamCumulative;
-	public double upStreamCumulative;
+	public double[] downStreamCumulative;
+	public double[] upStreamCumulative;
+	public double upStreamCumulativeMax;
+	public double downStreamCumulativeMax;
+	
 
 }

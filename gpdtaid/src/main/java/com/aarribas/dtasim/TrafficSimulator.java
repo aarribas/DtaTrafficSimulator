@@ -77,7 +77,7 @@ public class TrafficSimulator {
 //
 //		}
 
-		//		System.out.println(new Array2DRowRealMatrix(expandedODMatrices.get(450)).toString());
+				System.out.println(new Array2DRowRealMatrix(expandedODMatrices.get(450)).toString());
 		//		System.out.println(ODPairs.toString());
 		//		for(int i = 0; i<linkTravelTimes.get(39).length; i++){
 		//			System.out.println(i + "=" +linkTravelTimes.get(39)[i]);
@@ -95,7 +95,7 @@ public class TrafficSimulator {
 
 		//compute all odmatrices - note that we expect the tEnd to be a multiple of tStep
 		//TO DO: add a check and possibly throw an exception
-		for(int i = 0; i < tEnd/tStep; i++){
+		for(int i = 0; i < (int)(tEnd/tStep); i++){
 
 			double ctime = tStep * i;
 
