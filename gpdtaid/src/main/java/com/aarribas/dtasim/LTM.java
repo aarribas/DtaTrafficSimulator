@@ -17,6 +17,7 @@ public class LTM implements TrafficNetworkModel {
 	private double tEnd;
 	private double tStep;
 	private ArrayList<ArrayList<double[][]>> turningFractions;
+	private TrafficNodeModel nodeModel = null;
 
 	public LTM(ArrayList<double[][]> expandedODMatrices, TrafficData tfData, double tEnd, double tStep, ArrayList<ArrayList<double[][]>> turningFractions){
 		this.expandedODMatrices = expandedODMatrices;
@@ -24,6 +25,7 @@ public class LTM implements TrafficNetworkModel {
 		this.tEnd = tEnd;
 		this.tStep = tStep;
 		this.turningFractions = turningFractions;
+		this.nodeModel = new TrafficNodeModel();
 		init();
 
 	}
@@ -33,14 +35,7 @@ public class LTM implements TrafficNetworkModel {
 		//caculate the w's per link
 		calculateWs();
 
-		//create a map of id/index per node
-		Map<Double, Integer> nodeIndexes = new HashMap<Double, Integer>();
-		for(int nodeIndex = 0; nodeIndex < tfData.nodes.size(); nodeIndex++){
-
-			nodeIndexes.put(tfData.nodes.get(nodeIndex).id, nodeIndex);
-
-		}
-
+		//initialise the cumulatives per link
 		for(TrafficLink link : tfData.links){
 			//initialise link to 0 for all links  and timesteps
 			link.downStreamCumulative = new double[(int)(tEnd/tStep)];
@@ -48,13 +43,23 @@ public class LTM implements TrafficNetworkModel {
 			Arrays.fill(link.downStreamCumulative, 0);
 			Arrays.fill(link.upStreamCumulative, 0);
 
+			
 
-			//save references to this link at node level 
-			int startNodeIndex = nodeIndexes.get(link.startNode);
-			int endNodeIndex = nodeIndexes.get(link.endNode);
-			tfData.nodes.get(startNodeIndex).incomingLinks.add(link);
-			tfData.nodes.get(endNodeIndex).outgoingLinks.add(link);
-
+		}
+		
+		//The following is a way of adding references at node level to the incoming and outgoing links
+		//There are more efficient ways of doing this, but it is important to keep the addition of links
+		//in this order, because it is relevant when using turningFractions.
+		//This is based on the original MATLAB code.
+		for(TrafficNode node: tfData.nodes){
+			for(TrafficLink link : tfData.links){ 
+				if(node.id == link.startNode){
+					node.incomingLinks.add(link);
+				}
+				if(node.id == link.endNode){
+					node.outgoingLinks.add(link);
+				}
+			}
 		}
 
 	}
@@ -154,7 +159,7 @@ public class LTM implements TrafficNetworkModel {
 
 	}
 
-	private Pair<double[],double[]> updateCumulativesforNode(int nodeIndex, int timeClick){
+	private Pair<double[],double[]> updateCumulativesforNode(int nodeIndex, int timeClick, double[][] turningFractionsForNodeAndTime){
 
 		TrafficNode currNode = tfData.nodes.get(nodeIndex);
 		
