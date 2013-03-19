@@ -6,12 +6,12 @@ import java.util.Arrays;
 public class TrafficNodeModel {
 
 	//data that stays the same for all nodes
-	private TrafficData tfData = null;
-	private double[][] turningFractions;
+	private TrafficData tfData;
 	private double tStep;
 
 	//data initialised and used when calling the method run
 	private TrafficNode currNode;
+	private double[][] currTurningFractions;
 	private double[] currSendingFlow;
 	private double[] currReceivingFlow;
 
@@ -22,7 +22,10 @@ public class TrafficNodeModel {
 	private double[][] capacities;
 	private LINK_FLOW_STATUS[] linkFlowCalculationStatus;
 	private double[][] transferFlows;
-
+	
+	private double[] flowIncomingLinks;
+	private double[] flowOutgoingLinks;
+	
 	private enum LINK_FLOW_STATUS {
 
 		NOT_DONE,
@@ -31,18 +34,17 @@ public class TrafficNodeModel {
 
 	};
 
-	public TrafficNodeModel(TrafficData tfData, double[][] turningFractions, double tStep){
+	public TrafficNodeModel(TrafficData tfData, double tStep){
 
 		this.tfData = tfData;
-		this.turningFractions = turningFractions;
 		this.tStep = tStep;
 
 	}
 
-	public void run(TrafficNode node, double[] receivingFlow, double[] sendingFlow){
+	public void run(TrafficNode node, double[][] turningFractions, double[] receivingFlow, double[] sendingFlow){
 
 		//reset attributes
-		initRunData(node, receivingFlow, sendingFlow);
+		initRunData(node, turningFractions, receivingFlow, sendingFlow);
 
 		updateReceivingFractions();
 		updateIndividualFlows();
@@ -51,12 +53,13 @@ public class TrafficNodeModel {
 
 	}
 
-	private void initRunData(TrafficNode node, double[] receivingFlow, double[] sendingFlow){
+	private void initRunData(TrafficNode node, double[][] turningFractions, double[] receivingFlow, double[] sendingFlow){
 
 		//save the passed data
 		this.currNode = node;
 		this.currReceivingFlow = receivingFlow;
 		this.currSendingFlow = sendingFlow;
+		this.currTurningFractions = turningFractions;
 
 		int numIncoming = node.incomingLinks.size(); 
 		int numOutgoing = node.outgoingLinks.size();
@@ -91,7 +94,7 @@ public class TrafficNodeModel {
 		for(int j=0; j<currNode.outgoingLinks.size(); j++){
 			cumFlow = 0;
 			for(int i=0; i<currNode.incomingLinks.size(); i++){
-				cumFlow = cumFlow + turningFractions[i][j]*currSendingFlow[i];
+				cumFlow = cumFlow + currTurningFractions[i][j]*currSendingFlow[i];
 			}
 			if(cumFlow>0){
 				receivingFraction[j] = currReceivingFlow[j]/cumFlow;
@@ -112,7 +115,7 @@ public class TrafficNodeModel {
 		for(int i=0; i<currNode.incomingLinks.size(); i++){
 			for(int j=0; j<currNode.outgoingLinks.size(); j++){
 				if(receivingFraction[j]<1){
-					if(turningFractions[i][j]*currSendingFlow[i]>0){
+					if(currTurningFractions[i][j]*currSendingFlow[i]>0){
 						linkFlowCalculationStatus[i] = LINK_FLOW_STATUS.TO_RECALCULATE;
 					}
 				}	
@@ -121,13 +124,13 @@ public class TrafficNodeModel {
 			if(linkFlowCalculationStatus[i] == LINK_FLOW_STATUS.TO_RECALCULATE){
 				cumFlow = currNode.incomingLinks.get(i).capacity*tStep/currSendingFlow[i];
 				for(int j=0; j<currNode.outgoingLinks.size(); j++){
-					sendingCapFlows[i][j] = turningFractions[i][j]*currSendingFlow[i]*cumFlow;
+					sendingCapFlows[i][j] = currTurningFractions[i][j]*currSendingFlow[i]*cumFlow;
 					capFlows[j] = capFlows[j] + sendingCapFlows[i][j];
 				}
 			}
 			else{
 				for(int j=0; j<currNode.outgoingLinks.size(); j++){
-					capacities[i][j] = turningFractions[i][j]*currSendingFlow[i];
+					capacities[i][j] = currTurningFractions[i][j]*currSendingFlow[i];
 				}
 				linkFlowCalculationStatus[i] = LINK_FLOW_STATUS.DONE;
 				linksToDo--;
@@ -169,11 +172,11 @@ public class TrafficNodeModel {
 			ArrayList<Integer> indexesOfLinksInFreeFlow = new ArrayList<Integer>();
 			for(int i=0; i<currNode.incomingLinks.size(); i++){
 				if(linkFlowCalculationStatus[i] != LINK_FLOW_STATUS.DONE){
-					if(turningFractions[i][mostRestrictiveOutgoingLink]>0){
+					if(currTurningFractions[i][mostRestrictiveOutgoingLink]>0){
 						if(currSendingFlow[i] <= currNode.incomingLinks.get(i).capacity*tStep*mostRestrictiveConstraint){
 							indexesOfLinksInFreeFlow.add(i);
 							for(int j=0; j<currNode.outgoingLinks.size(); j++){
-								capacities[i][j] = turningFractions[i][j]*currSendingFlow[i];
+								capacities[i][j] = currTurningFractions[i][j]*currSendingFlow[i];
 							}
 							linkFlowCalculationStatus[i] = LINK_FLOW_STATUS.DONE;
 							linksToDo--;
@@ -186,7 +189,7 @@ public class TrafficNodeModel {
 				for(int j=0; j<currNode.outgoingLinks.size(); j++){
 					for(int indexLinkInFF : indexesOfLinksInFreeFlow){
 						capFlows[j] = capFlows[j] - sendingCapFlows[indexLinkInFF][j];
-						currReceivingFlow[j] = currReceivingFlow[j] - turningFractions[indexLinkInFF][j]
+						currReceivingFlow[j] = currReceivingFlow[j] - currTurningFractions[indexLinkInFF][j]
 								*currSendingFlow[indexLinkInFF];
 						
 					}
@@ -195,7 +198,7 @@ public class TrafficNodeModel {
 			else{
 				for(int i=0; i<currNode.incomingLinks.size(); i++){
 					if(linkFlowCalculationStatus[i] != LINK_FLOW_STATUS.DONE){
-						if(turningFractions[i][mostRestrictiveOutgoingLink] > 0){
+						if(currTurningFractions[i][mostRestrictiveOutgoingLink] > 0){
 							for(int j=0; j<currNode.outgoingLinks.size(); j++){
 								capFlows[j] = capFlows[j] - sendingCapFlows[i][j];
 								currReceivingFlow[j] = currReceivingFlow[j] - (sendingCapFlows[i][j]*mostRestrictiveConstraint);
@@ -213,18 +216,54 @@ public class TrafficNodeModel {
 	}
 
 	private void calculateIncomingFlows(){
-
+		
+		flowIncomingLinks = new double[currNode.incomingLinks.size()];
+		for(int i=0; i<currNode.incomingLinks.size(); i++){
+			double constraint = 1;
+			
+			//iterate through all  possible constraints
+			for(int j=0; j<currNode.outgoingLinks.size(); j++){
+				if(currTurningFractions[i][j] * currSendingFlow[i] > 0){
+					constraint = capacities[i][j] / (currTurningFractions[i][j]*currSendingFlow[i]);
+					
+					//this is implemented in Matlab in a weird way 
+					//using an unnecesary maxconstraint variable 
+					//in principle this is equivalent and simpler;
+					if(constraint > 1){
+						constraint = 1; //bigger than 1 does not make sense
+					}
+				}
+			}
+			//set final flow
+			flowIncomingLinks[i] = constraint * currSendingFlow[i];
+		}
 	}
 
 	private void calculateOutogoingFlows(){
+		
+		//compute transferflows
+		for(int i=0; i<currNode.incomingLinks.size(); i++){
+			for(int j=0; j<currNode.outgoingLinks.size(); j++){
+				transferFlows[i][j] = currTurningFractions[i][j] * flowIncomingLinks[i];
+			}
+		}
+		
+		//compute final outgoingflows
+		for(int j=0; j<currNode.outgoingLinks.size(); j++){
+			flowOutgoingLinks[j] = 0;
+			for(int i=0; i<currNode.incomingLinks.size(); i++){
+				flowOutgoingLinks[j] = flowOutgoingLinks[j] + transferFlows[i][j];
+			}
+		}
 
 	}
 
-	public void getIncomingFlows(){
-
+	public double[] getIncomingFlows(){
+		return flowIncomingLinks;
 	}
 
-	public void getOutgoingFlows(){
+	public double[] getOutgoingFlows(){
+		return flowOutgoingLinks;
 
 	}
 

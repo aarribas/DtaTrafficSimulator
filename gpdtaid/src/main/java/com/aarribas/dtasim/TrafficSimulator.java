@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Scanner;
-
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.RealMatrix;
 import org.apache.commons.math.linear.RealVector;
@@ -77,7 +75,7 @@ public class TrafficSimulator {
 //
 //		}
 
-				System.out.println(new Array2DRowRealMatrix(expandedODMatrices.get(450)).toString());
+		//		System.out.println(new Array2DRowRealMatrix(expandedODMatrices.get(450)).toString());
 		//		System.out.println(ODPairs.toString());
 		//		for(int i = 0; i<linkTravelTimes.get(39).length; i++){
 		//			System.out.println(i + "=" +linkTravelTimes.get(39)[i]);
