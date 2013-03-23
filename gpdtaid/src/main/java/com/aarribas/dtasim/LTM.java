@@ -2,6 +2,8 @@ package com.aarribas.dtasim;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Scanner;
+
 import com.aarribas.traffictools.CumulativeBasedCalculator;
 import com.aarribas.utils.Pair;
 
@@ -47,12 +49,14 @@ public class LTM implements TrafficNetworkModel {
 		//in this order, because it is relevant when using turningFractions.
 		//This is based on the original MATLAB code.
 		for(TrafficNode node: tfData.nodes){
+			node.incomingLinks = new ArrayList<TrafficLink>();
+			node.outgoingLinks = new ArrayList<TrafficLink>();
 			for(TrafficLink link : tfData.links){ 
 				if(node.id == link.startNode){
-					node.incomingLinks.add(link);
+					node.outgoingLinks.add(link);
 				}
 				if(node.id == link.endNode){
-					node.outgoingLinks.add(link);
+					node.incomingLinks.add(link);
 				}
 			}
 		}
@@ -96,9 +100,11 @@ public class LTM implements TrafficNetworkModel {
 		initLinkCumulativeMaximas();
 
 		for(int timeClick = 0; timeClick< (int)(tEnd/tStep); timeClick++){
+			System.out.println("TIMECLICK" + timeClick);
 
 			for(int nodeIndex = 0; nodeIndex < tfData.nodes.size(); nodeIndex++){
 				TrafficNode node  = tfData.nodes.get(nodeIndex);
+		
 
 				if(node.incomingLinks.isEmpty() && node.outgoingLinks.isEmpty()){
 
@@ -114,29 +120,37 @@ public class LTM implements TrafficNetworkModel {
 
 				}
 				else if (node.outgoingLinks.isEmpty()){
+					
 
 					//destination node, set downstream cumulative only
 					for(TrafficLink link: node.incomingLinks){
-						link.downStreamCumulative[timeClick] = CumulativeBasedCalculator.calculateCumulativeValue(link.downStreamCumulative, timeClick*tStep - link.length/link.freeSpeed, tStep);
+						link.downStreamCumulative[timeClick] = CumulativeBasedCalculator.calculateCumulativeValue(link.upStreamCumulative, timeClick*tStep - link.length/link.freeSpeed, tStep);
 					}
 				}
 				else{
+					
 					if(!turningFractions.get(nodeIndex).isEmpty()){
-
 						//compute the overall sum of the turningFraction and continue if sum >0
-						if (calculateTurningFractionSum(turningFractions.get(nodeIndex).get(timeClick)) > 0){
-
+						if (!(calculateTurningFractionSum(turningFractions.get(nodeIndex).get(timeClick)) == 0)){
+							
 							//get updated pair of cumulatives a = upStreamCumulative, b = downStreamCumulative
 							Pair<double[],double[]> PairOfCumulatives = updateCumulativesforNode(nodeIndex, timeClick, turningFractions.get(nodeIndex).get(timeClick));
 							//set downstreamcumulative
 							for(int i = 0; i<node.incomingLinks.size(); i++){
 								node.incomingLinks.get(i).downStreamCumulative[timeClick] = PairOfCumulatives.b[i];
+//								System.out.println("down" + PairOfCumulatives.b[i]);
 							}
 
 							//set upstreamcumulative
 							for(int j = 0; j<node.outgoingLinks.size(); j++){
 								node.outgoingLinks.get(j).upStreamCumulative[timeClick] = PairOfCumulatives.a[j];
+//								System.out.println("up" + PairOfCumulatives.a[j]);
 							}
+//							
+//							System.out.println(node.id);
+//							System.out.println(timeClick*tStep);
+//							Scanner scan = new Scanner(System.in);
+//							scan.nextLine();
 
 
 						}
@@ -144,14 +158,17 @@ public class LTM implements TrafficNetworkModel {
 					}
 
 				}
+				
 			}
+
 
 			//update cumulative maximas.
 			updateLinkCumulativeMaximas(timeClick);
+			System.out.println("END1");
 		}
 
 
-
+		System.out.println("END");
 	}
 
 	private Pair<double[],double[]> updateCumulativesforNode(int nodeIndex, int timeClick, double[][] turningFractionsForNodeAndTime){
@@ -164,21 +181,36 @@ public class LTM implements TrafficNetworkModel {
 		
 		//calculate flows
 		double[] sendingFlow = calculateSendingFlowForNode(nodeIndex, timeClick);
-		double[] receivingFlow = calculateReceivingFlow(nodeIndex, timeClick);
+		double[] receivingFlow = calculateReceivingFlowForNode(nodeIndex, timeClick);
 		
+//		
+//		System.out.println(Arrays.toString(sendingFlow));
+//		System.out.println(Arrays.toString(receivingFlow));
+//		Scanner scan = new Scanner(System.in);
+//		scan.nextLine();
+
 		//run the capacity proportional node model
 		nodeModel.run(currNode,turningFractionsForNodeAndTime, receivingFlow, sendingFlow);
+		
+		//compute valid previous click
+		int prevClick;
+		if(timeClick-1 <0){
+			prevClick=0;
+		}
+		else{
+			prevClick= timeClick-1;
+		}
 		
 		//save the cumulatives
 		for(int linkIndex = 0; linkIndex < currNode.incomingLinks.size(); linkIndex++){
 			
-			downStreamCumulativeAtNode[linkIndex] = currNode.incomingLinks.get(linkIndex).downStreamCumulativeMax
+			downStreamCumulativeAtNode[linkIndex] = currNode.incomingLinks.get(linkIndex).downStreamCumulative[prevClick]
 					+ nodeModel.getIncomingFlows()[linkIndex];
 			
 		}
 		for(int linkIndex = 0; linkIndex < currNode.outgoingLinks.size(); linkIndex++){
 			
-			upStreamCumulativeAtNode[linkIndex] = currNode.outgoingLinks.get(linkIndex).upStreamCumulativeMax
+			upStreamCumulativeAtNode[linkIndex] = currNode.outgoingLinks.get(linkIndex).upStreamCumulative[prevClick]
 					+ nodeModel.getOutgoingFlows()[linkIndex];
 			
 		}
@@ -200,7 +232,20 @@ public class LTM implements TrafficNetworkModel {
 			double cap = link.capacity*tStep;
 			double updateTime = timeClick*tStep - link.length/link.freeSpeed;
 			double sendingFlowEntry = CumulativeBasedCalculator.calculateCumulativeValue(link.upStreamCumulative, updateTime, tStep);
-			sendingFlowEntry = sendingFlowEntry - link.downStreamCumulativeMax;
+			
+			//compute valid previous click
+			int prevClick;
+			if(timeClick-1 <0){
+				prevClick=0;
+			}
+			else{
+				prevClick= timeClick-1;
+			}
+			
+		
+			sendingFlowEntry = sendingFlowEntry - link.downStreamCumulative[timeClick-1];
+			
+			System.out.println(sendingFlowEntry);
 
 			//real sending flow is the min(cap,sf)
 			if(cap < sendingFlowEntry){
@@ -209,6 +254,7 @@ public class LTM implements TrafficNetworkModel {
 			else{
 				sendingFlow[linkIndex] = sendingFlowEntry;
 			}
+			
 
 		}
 
@@ -216,7 +262,7 @@ public class LTM implements TrafficNetworkModel {
 
 	}
 
-	private double[] calculateReceivingFlow(int nodeIndex, int timeClick){
+	private double[] calculateReceivingFlowForNode(int nodeIndex, int timeClick){
 
 		TrafficNode node = tfData.nodes.get(nodeIndex);
 
@@ -227,10 +273,22 @@ public class LTM implements TrafficNetworkModel {
 			TrafficLink link = node.outgoingLinks.get(linkIndex);
 
 			double cap = link.capacity*tStep;
-			double updateTime = timeClick*tStep + link.length/link.w;
+			double updateTime = timeClick*tStep - link.length/(-link.w);
 			double receivingFlowEntry = CumulativeBasedCalculator.calculateCumulativeValue(link.downStreamCumulative, updateTime, tStep);
+	
+			//compute valid previous click
+			int prevClick;
+			if(timeClick-1 <0){
+				prevClick=0;
+			}
+			else{
+				prevClick= timeClick-1;
+			}
 			
-			receivingFlowEntry = receivingFlowEntry + link.kJam*link.length - link.upStreamCumulativeMax;
+			receivingFlowEntry = receivingFlowEntry 
+					+ link.kJam*link.length
+					- link.upStreamCumulative[prevClick];
+			
 			
 			//real receiving flow is the min(cap,sf)
 			if(cap < receivingFlowEntry){
@@ -274,8 +332,17 @@ public class LTM implements TrafficNetworkModel {
 
 		//compute number of outgoinglinks
 		int numOutgoingLinks = tfData.nodes.get(nodeIndex).outgoingLinks.size();
-
-		return link.upStreamCumulativeMax+sum/numOutgoingLinks;
+		
+		//compute valid previous click
+		int prevClick;
+		if(timeClick-1 <0){
+			prevClick=0;
+		}
+		else{
+			prevClick= timeClick-1;
+		}
+		
+		return link.upStreamCumulative[prevClick]+sum/numOutgoingLinks;
 	}
 
 

@@ -2,6 +2,7 @@ package com.aarribas.traffictools;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Scanner;
 
 import com.aarribas.dtasim.TrafficLink;
 
@@ -37,6 +38,7 @@ public class CumulativeBasedCalculator {
 			time = tBeforeClick*tStep + cInt*(tStep*(tBeforeClick+1) - tBeforeClick*tStep);
 		}
 		else if(tAfterClick == -1){
+			//must be properly taken care of by the caller not to produce a exception
 			time = Double.MAX_VALUE;
 		}
 		else{
@@ -51,26 +53,40 @@ public class CumulativeBasedCalculator {
 
 		//Attention: in the matlab code (findcumulative) the calculation o tbefore and tafter is inconsistent with the calculation in findTravelTimes
 		//I decided to make it consistent here
-
+		
+		double cumulative;
+		int tClickAfter;
+		
+		//fix click before
 		int tClickBefore = (int)(t/tStep);
 
-		if(tClickBefore == cumulatives.length-1){
-			//if we have reached the last time click return the last cumulative
-			return cumulatives[cumulatives.length-1];
-		}
-
-		//if the we are at the very beginning the value is 0
-		if(tClickBefore == 0){
-			return 0;
+		//fix click after = min(max timeClick, tbef + 1)
+		if(tClickBefore + 1 > cumulatives.length-1){
+			tClickAfter = cumulatives.length-1;
 		}
 		else{
-			int tClickAfter = tClickBefore + 1;
+			tClickAfter = tClickBefore + 1;
+			
+		}
+		
+		//before beginning of time the cumulative is 0
+		if(t < 0){
+			cumulative = 0;
+		}
+		else{
+			
+			
+			
 			double tempFasterTime = tClickBefore*tStep;
 			double tempFasterCumulative = cumulatives[tClickBefore];
 			double tInt = (t-tempFasterTime)/((tClickAfter*tStep)-tempFasterTime);
-			return tempFasterCumulative + tInt * (cumulatives[tClickAfter]-tempFasterCumulative);
+			
+			//TODO verify the code does not fail here due to max value of tempFasterCumulative
+			cumulative =  tempFasterCumulative + tInt * (cumulatives[tClickAfter]-tempFasterCumulative);
 
 		}
+		
+		return cumulative;
 
 	}
 

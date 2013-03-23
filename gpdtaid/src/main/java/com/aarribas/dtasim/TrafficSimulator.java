@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Scanner;
+
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.RealMatrix;
 import org.apache.commons.math.linear.RealVector;
@@ -42,6 +44,25 @@ public class TrafficSimulator {
 
 		computeTurningFractions(100, 0, linkSpeeds);
 		
+		LTM ltm = new LTM(expandedODMatrices, tfData, tEnd, tStep, turningFractions);
+		ltm.run();
+		System.out.println(Arrays.toString(tfData.links.get(0).downStreamCumulative));
+		for(int i= 0; i < tfData.links.get(0).downStreamCumulative.length; i++){
+			System.out.println(i);
+			System.out.println(tfData.links.get(0).downStreamCumulative[i]);
+		}
+//		int  i = 0;
+//		for(TrafficLink link : tfData.links){
+//			System.out.println("link " + i);
+//			System.out.println("down max " + link.downStreamCumulativeMax);
+//			System.out.println("up max " + link.upStreamCumulativeMax);
+//			i++;
+//		}
+		
+		//run the DTA
+		
+		//collect output.
+		
 //		//code to debug computeTurningFractions
 //		int index = 0;
 //
@@ -65,12 +86,12 @@ public class TrafficSimulator {
 //			}
 //
 //
-//			if(index == 11 || index == 7 || index == 10){
+//			
 //
 //				Scanner scan = new Scanner(System.in);
 //				scan.nextLine();
 //
-//			}
+//			
 //			index++;
 //
 //		}
@@ -89,7 +110,7 @@ public class TrafficSimulator {
 		int timeSliceNumber = 0;
 
 		//a little error Tolerance is required in order to compare too doubles (foreseen representation errors of floating point)
-		double doubleErrorTolerance = 0.000001d;
+		double doubleErrorTolerance = 0.0000001d;
 
 		//compute all odmatrices - note that we expect the tEnd to be a multiple of tStep
 		//TO DO: add a check and possibly throw an exception
@@ -228,10 +249,10 @@ public class TrafficSimulator {
 
 
 		while( timeClick < (int) (tEnd/tStep)){
+			
 
 			for(int nodeIndex = 0; nodeIndex < tfData.nodes.size(); nodeIndex++){
 				TrafficNode currNode = tfData.nodes.get(nodeIndex);
-				System.out.println("current iter " + nodeIndex + "time " + timeClick);
 
 				//if there are incoming links and outgoing links for this node, initialise the turning fractions accordingly
 				if(incomingLinkIndexes.containsKey(currNode.id) && outgoingLinkIndexes.containsKey(currNode.id))
@@ -252,7 +273,7 @@ public class TrafficSimulator {
 
 
 				for(int setOfRoutesIndex = 0; setOfRoutesIndex < pathFinder.getRoutes().size(); setOfRoutesIndex++){
-
+					
 					//extract set of routes 
 					ArrayList<PathRepresentation> setOfRoutes = pathFinder.getRoutes().get(setOfRoutesIndex);
 
@@ -262,7 +283,8 @@ public class TrafficSimulator {
 						PathRepresentation route = setOfRoutes.get(routeIndex);
 
 						//obtain the index in the route of the nodeIndex
-						int indexNodeInRoute = route.findIndexInPathOfNodeIndex(nodeIndex);
+						int indexNodeInRoute = -1;
+						indexNodeInRoute = route.findIndexInPathOfNodeIndex(nodeIndex);
 
 						if(indexNodeInRoute == -1 || pathFinder.getRouteFractions().get(setOfRoutesIndex).get(routeIndex)[timeClick] == 0 || route.isBorderNode(nodeIndex)){
 
@@ -305,6 +327,13 @@ public class TrafficSimulator {
 								//compute turningFractions for the current node and time click
 								//Remark: turning Fraction = given turning fractino + route Fraction + flow according to ODMatrix
 								//TODO Review in Cascetta's book
+								if(nodeIndex == 10 && timeClick ==300){
+									System.out.println(incomingLinkPathIndex + " debug " +outgoingLinkPathIndex);
+									System.out.println(turningFractions.get(nodeIndex).get(timeClick)[incomingLinkPathIndex][outgoingLinkPathIndex]);
+									System.out.println(pathFinder.getRouteFractions().get(setOfRoutesIndex).get(routeIndex)[timeClick]);
+									System.out.println(expandedODMatrices.get(timeClickStartODFlow)[ODPairs[setOfRoutesIndex].getIndexStartNode(tfData.nodes)][ODPairs[setOfRoutesIndex].getIndexEndNode(tfData.nodes)]);
+								}
+								
 
 								turningFractions.get(nodeIndex).get(timeClick)[incomingLinkPathIndex][outgoingLinkPathIndex] 
 										= turningFractions.get(nodeIndex).get(timeClick)[incomingLinkPathIndex][outgoingLinkPathIndex]
@@ -320,11 +349,10 @@ public class TrafficSimulator {
 
 				}//end for visiting sets of routes
 
-				//set turning fractions for previous time step - only if the node is not a border node (hence not empty)
+				//set turning fractions from previous click to current based on current - only if the node is not a border node (hence not empty)
 				if(!turningFractions.get(nodeIndex).isEmpty()){
 					RealMatrix tempMatrix = new Array2DRowRealMatrix(turningFractions.get(nodeIndex).get(timeClick));
 
-					boolean zeroTF = true;
 					
 					for(int row = 0; row< turningFractions.get(nodeIndex).get(timeClick).length; row++){
 						double sumTF = 0;
@@ -335,30 +363,23 @@ public class TrafficSimulator {
 						}
 
 						if(sumTF>0){
+							//save the normalised row
 							RealVector vect= tempMatrix.getRowVector(row);
 							tempMatrix.setRowVector(row, vect.mapDivide(sumTF));
-							zeroTF = false;
+						}
+						else{
+							//use the row from the previous fraction if normalisation was not required - as in original MATLAB code.
+							double[] prevRow = turningFractions.get(nodeIndex).get(prevTimeClick)[row];
+							tempMatrix.setRow(row, prevRow);
 						}
 
 					}
 					
 					//udpate turning fractions from previous time click to current
-					if(!zeroTF){
-						//if the turning fraction is not zero update turning fractions with new value
-						for(int j = prevTimeClick+1; j<timeClick+1; j++){
-							turningFractions.get(nodeIndex).set(j, tempMatrix.getData());
-						}
+					for(int j = prevTimeClick+1; j<=timeClick; j++){
+						turningFractions.get(nodeIndex).set(j, tempMatrix.getData());
 					}
-					else{
-						//otherwise update with the previous turning fraction value
-						for(int j = prevTimeClick+1; j<timeClick+1; j++){
-							turningFractions.get(nodeIndex).set(j, turningFractions.get(nodeIndex).get(prevTimeClick));;
-							//probably nothing to do if sumTF<0 -- double check
-
-
-						}
-
-					}
+					
 
 				}
 
@@ -412,6 +433,41 @@ public class TrafficSimulator {
 			outgoingLinkIndexes.get(startNodeId).add(linkIndex);
 			incomingLinkIndexes.get(endNodeId).add(linkIndex);
 		}
+	}
+	
+	private void runDTA(){
+		
+		//init LTM
+		int iteration = 1;
+		int maxIterations = 30;
+		
+		//main loop
+		while(iteration<maxIterations){
+			
+			//calculateTurningFRactions
+			
+			//update link data calling the LTM
+			
+			//obtain simulated speeds
+			
+			//obtain simulated speeds at arrival
+			
+			//compute travelTime
+			
+			//calculate new routes and routeFractions using dijkstra
+			
+			//recompute the gap
+			
+			//update routeFractions by means of the path swapping heuristic
+			
+			//move on to next iteration
+			iteration++;
+		}
+		
+		//recalculate turningFractions for final iteration
+		
+		//obtain final link data using LTM
+		
 	}
 
 }

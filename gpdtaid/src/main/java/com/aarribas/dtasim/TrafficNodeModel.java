@@ -66,7 +66,7 @@ public class TrafficNodeModel {
 
 		//initialise the structures required by run
 		linksToDo = numIncoming;
-		receivingFraction = new double[numIncoming];
+		receivingFraction = new double[numOutgoing];
 		sendingCapFlows = new double[numIncoming][numOutgoing];
 		capFlows = new double[numOutgoing];
 		capacities = new double[numIncoming][numOutgoing] ;
@@ -117,6 +117,7 @@ public class TrafficNodeModel {
 				if(receivingFraction[j]<1){
 					if(currTurningFractions[i][j]*currSendingFlow[i]>0){
 						linkFlowCalculationStatus[i] = LINK_FLOW_STATUS.TO_RECALCULATE;
+						break;
 					}
 				}	
 			}
@@ -139,7 +140,7 @@ public class TrafficNodeModel {
 	}
 
 	private void updateIndividualFlows(){
-		int mostRestrictiveOutgoingLink = 0;
+		int mostRestrictiveOutgoingLink = -1;
 	
 		while(linksToDo > 0){
 			
@@ -147,13 +148,13 @@ public class TrafficNodeModel {
 				mostRestrictiveOutgoingLink = mostRestrictiveOutgoingLink + 1;
 			}
 			else{
-				mostRestrictiveOutgoingLink = 1;
+				mostRestrictiveOutgoingLink = 0;
 			}
 			
 			//establish constraint
 			double mostRestrictiveConstraint = 1;
 			for(int j=0; j<currNode.outgoingLinks.size(); j++){
-				if(capFlows[j]> 0.0000000001d){  //prevents rounding errors
+				if(capFlows[j]> 0.000000000001d){  //prevents ¤rounding errors
 					if(currReceivingFlow[j] >= 0){
 						receivingFraction[j] = currReceivingFlow[j] / capFlows[j];
 					}
@@ -164,7 +165,7 @@ public class TrafficNodeModel {
 				else{
 					receivingFraction[j] = 1;
 				}
-				if (receivingFraction[j] == mostRestrictiveConstraint){
+				if (receivingFraction[j] < mostRestrictiveConstraint){
 					mostRestrictiveOutgoingLink = j;
 					mostRestrictiveConstraint = receivingFraction[j];
 				}
@@ -240,7 +241,7 @@ public class TrafficNodeModel {
 	}
 
 	private void calculateOutogoingFlows(){
-		
+		flowOutgoingLinks = new double[currNode.outgoingLinks.size()];
 		//compute transferflows
 		for(int i=0; i<currNode.incomingLinks.size(); i++){
 			for(int j=0; j<currNode.outgoingLinks.size(); j++){
@@ -250,6 +251,7 @@ public class TrafficNodeModel {
 		
 		//compute final outgoingflows
 		for(int j=0; j<currNode.outgoingLinks.size(); j++){
+		
 			flowOutgoingLinks[j] = 0;
 			for(int i=0; i<currNode.incomingLinks.size(); i++){
 				flowOutgoingLinks[j] = flowOutgoingLinks[j] + transferFlows[i][j];
