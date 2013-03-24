@@ -8,6 +8,8 @@ import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.RealMatrix;
 import org.apache.commons.math.linear.RealVector;
 
+import com.aarribas.traffictools.CumulativeBasedCalculator;
+import com.aarribas.traffictools.CumulativeBasedCalculator.SIM_FLOW_OPTION;
 import com.aarribas.traffictools.DynamicDijkstra;
 import com.aarribas.traffictools.PathFinder;
 import com.aarribas.traffictools.PathRepresentation;
@@ -42,22 +44,6 @@ public class TrafficSimulator {
 
 		computeTurningFractions(100, 0, linkSpeeds);
 		
-		LTM ltm = new LTM(expandedODMatrices, tfData, tEnd, tStep, turningFractions);
-		ltm.run();
-		
-//		//code to quick - debug cumulatives
-//		System.out.println(Arrays.toString(tfData.links.get(0).downStreamCumulative));
-//		for(int i= 0; i < tfData.links.get(0).downStreamCumulative.length; i++){
-//			System.out.println(i);
-//			System.out.println(tfData.links.get(0).downStreamCumulative[i]);
-//		}
-		int  i = 0;
-		for(TrafficLink link : tfData.links){
-			System.out.println("link " + i);
-			System.out.println("down max " + link.downStreamCumulativeMax);
-			System.out.println("up max " + link.upStreamCumulativeMax);
-			i++;
-		}
 		
 //		//code to quick - debug computeTurningFractions
 //		int index = 0;
@@ -91,13 +77,28 @@ public class TrafficSimulator {
 //			index++;
 //
 //		}
-
-		//		System.out.println(new Array2DRowRealMatrix(expandedODMatrices.get(450)).toString());
-		//		System.out.println(ODPairs.toString());
-		//		for(int i = 0; i<linkTravelTimes.get(39).length; i++){
-		//			System.out.println(i + "=" +linkTravelTimes.get(39)[i]);
-		//		}
-
+		
+		LTM ltm = new LTM(expandedODMatrices, tfData, tEnd, tStep, turningFractions);
+		ltm.run();
+		
+//		//code to quick - debug cumulatives
+//		System.out.println(Arrays.toString(tfData.links.get(0).downStreamCumulative));
+//		for(int i= 0; i < tfData.links.get(0).downStreamCumulative.length; i++){
+//			System.out.println(i);
+//			System.out.println(tfData.links.get(0).downStreamCumulative[i]);
+//		}
+//		int  i = 0;
+//		for(TrafficLink link : tfData.links){
+//			System.out.println("link " + i);
+//			System.out.println("down max " + link.downStreamCumulativeMax);
+//			System.out.println("up max " + link.upStreamCumulativeMax);
+//			i++;
+//		}
+		
+		double[][] speeds = CumulativeBasedCalculator.calculateCumulativeToSpeeds(tfData.links, tEnd, tStep);
+		double[][] flows = CumulativeBasedCalculator.calculateCumulativeToFlows(tfData.links, SIM_FLOW_OPTION.UPSTREAM, tEnd, tStep);
+		double[][] density = CumulativeBasedCalculator.calculateCumulativeToDensity(tfData.links, tEnd, tStep);
+		System.out.println("END");
 	}
 
 	private void expandODMatrices(){
