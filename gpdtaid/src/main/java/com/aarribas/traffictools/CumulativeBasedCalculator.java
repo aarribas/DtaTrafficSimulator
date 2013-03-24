@@ -2,8 +2,6 @@ package com.aarribas.traffictools;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Scanner;
-
 import com.aarribas.dtasim.TrafficLink;
 
 public class CumulativeBasedCalculator {

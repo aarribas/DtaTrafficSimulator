@@ -2,8 +2,6 @@ package com.aarribas.dtasim;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Scanner;
-
 import com.aarribas.traffictools.CumulativeBasedCalculator;
 import com.aarribas.utils.Pair;
 
@@ -100,8 +98,7 @@ public class LTM implements TrafficNetworkModel {
 		initLinkCumulativeMaximas();
 
 		for(int timeClick = 0; timeClick< (int)(tEnd/tStep); timeClick++){
-			System.out.println("TIMECLICK" + timeClick);
-
+		
 			for(int nodeIndex = 0; nodeIndex < tfData.nodes.size(); nodeIndex++){
 				TrafficNode node  = tfData.nodes.get(nodeIndex);
 		
@@ -138,19 +135,13 @@ public class LTM implements TrafficNetworkModel {
 							//set downstreamcumulative
 							for(int i = 0; i<node.incomingLinks.size(); i++){
 								node.incomingLinks.get(i).downStreamCumulative[timeClick] = PairOfCumulatives.b[i];
-//								System.out.println("down" + PairOfCumulatives.b[i]);
 							}
 
 							//set upstreamcumulative
 							for(int j = 0; j<node.outgoingLinks.size(); j++){
 								node.outgoingLinks.get(j).upStreamCumulative[timeClick] = PairOfCumulatives.a[j];
-//								System.out.println("up" + PairOfCumulatives.a[j]);
 							}
-//							
-//							System.out.println(node.id);
-//							System.out.println(timeClick*tStep);
-//							Scanner scan = new Scanner(System.in);
-//							scan.nextLine();
+
 
 
 						}
@@ -163,12 +154,10 @@ public class LTM implements TrafficNetworkModel {
 
 
 			//update cumulative maximas.
+			//maximas can be used in the logic or for debugging purposes 
+			//at the moment they are not used in the logic
 			updateLinkCumulativeMaximas(timeClick);
-			System.out.println("END1");
 		}
-
-
-		System.out.println("END");
 	}
 
 	private Pair<double[],double[]> updateCumulativesforNode(int nodeIndex, int timeClick, double[][] turningFractionsForNodeAndTime){
@@ -183,24 +172,13 @@ public class LTM implements TrafficNetworkModel {
 		double[] sendingFlow = calculateSendingFlowForNode(nodeIndex, timeClick);
 		double[] receivingFlow = calculateReceivingFlowForNode(nodeIndex, timeClick);
 		
-//		
-//		System.out.println(Arrays.toString(sendingFlow));
-//		System.out.println(Arrays.toString(receivingFlow));
-//		Scanner scan = new Scanner(System.in);
-//		scan.nextLine();
 
 		//run the capacity proportional node model
 		nodeModel.run(currNode,turningFractionsForNodeAndTime, receivingFlow, sendingFlow);
 		
 		//compute valid previous click
-		int prevClick;
-		if(timeClick-1 <0){
-			prevClick=0;
-		}
-		else{
-			prevClick= timeClick-1;
-		}
-		
+		int prevClick = Math.max(0, timeClick-1);
+	
 		//save the cumulatives
 		for(int linkIndex = 0; linkIndex < currNode.incomingLinks.size(); linkIndex++){
 			
@@ -233,27 +211,10 @@ public class LTM implements TrafficNetworkModel {
 			double updateTime = timeClick*tStep - link.length/link.freeSpeed;
 			double sendingFlowEntry = CumulativeBasedCalculator.calculateCumulativeValue(link.upStreamCumulative, updateTime, tStep);
 			
-			//compute valid previous click
-			int prevClick;
-			if(timeClick-1 <0){
-				prevClick=0;
-			}
-			else{
-				prevClick= timeClick-1;
-			}
+			sendingFlowEntry = sendingFlowEntry - link.downStreamCumulative[Math.max(0, timeClick-1)];
 			
-		
-			sendingFlowEntry = sendingFlowEntry - link.downStreamCumulative[timeClick-1];
-			
-			System.out.println(sendingFlowEntry);
-
 			//real sending flow is the min(cap,sf)
-			if(cap < sendingFlowEntry){
-				sendingFlow[linkIndex] = cap;
-			}
-			else{
-				sendingFlow[linkIndex] = sendingFlowEntry;
-			}
+			sendingFlow[linkIndex] = Math.min(cap, sendingFlowEntry);
 			
 
 		}
@@ -276,27 +237,14 @@ public class LTM implements TrafficNetworkModel {
 			double updateTime = timeClick*tStep - link.length/(-link.w);
 			double receivingFlowEntry = CumulativeBasedCalculator.calculateCumulativeValue(link.downStreamCumulative, updateTime, tStep);
 	
-			//compute valid previous click
-			int prevClick;
-			if(timeClick-1 <0){
-				prevClick=0;
-			}
-			else{
-				prevClick= timeClick-1;
-			}
-			
 			receivingFlowEntry = receivingFlowEntry 
 					+ link.kJam*link.length
-					- link.upStreamCumulative[prevClick];
+					- link.upStreamCumulative[Math.max(0, timeClick-1)];
 			
 			
 			//real receiving flow is the min(cap,sf)
-			if(cap < receivingFlowEntry){
-				receivingFlow[linkIndex] = cap;
-			}
-			else{
-				receivingFlow[linkIndex] = receivingFlowEntry;
-			}
+			receivingFlow[linkIndex] = Math.min(cap, receivingFlowEntry);
+			
 
 		}
 
@@ -333,16 +281,8 @@ public class LTM implements TrafficNetworkModel {
 		//compute number of outgoinglinks
 		int numOutgoingLinks = tfData.nodes.get(nodeIndex).outgoingLinks.size();
 		
-		//compute valid previous click
-		int prevClick;
-		if(timeClick-1 <0){
-			prevClick=0;
-		}
-		else{
-			prevClick= timeClick-1;
-		}
 		
-		return link.upStreamCumulative[prevClick]+sum/numOutgoingLinks;
+		return link.upStreamCumulative[Math.max(0,timeClick-1)]+sum/numOutgoingLinks;
 	}
 
 

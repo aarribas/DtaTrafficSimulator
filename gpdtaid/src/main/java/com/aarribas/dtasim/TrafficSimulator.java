@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Scanner;
-
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.RealMatrix;
 import org.apache.commons.math.linear.RealVector;
@@ -46,24 +44,22 @@ public class TrafficSimulator {
 		
 		LTM ltm = new LTM(expandedODMatrices, tfData, tEnd, tStep, turningFractions);
 		ltm.run();
-		System.out.println(Arrays.toString(tfData.links.get(0).downStreamCumulative));
-		for(int i= 0; i < tfData.links.get(0).downStreamCumulative.length; i++){
-			System.out.println(i);
-			System.out.println(tfData.links.get(0).downStreamCumulative[i]);
-		}
-//		int  i = 0;
-//		for(TrafficLink link : tfData.links){
-//			System.out.println("link " + i);
-//			System.out.println("down max " + link.downStreamCumulativeMax);
-//			System.out.println("up max " + link.upStreamCumulativeMax);
-//			i++;
+		
+//		//code to quick - debug cumulatives
+//		System.out.println(Arrays.toString(tfData.links.get(0).downStreamCumulative));
+//		for(int i= 0; i < tfData.links.get(0).downStreamCumulative.length; i++){
+//			System.out.println(i);
+//			System.out.println(tfData.links.get(0).downStreamCumulative[i]);
 //		}
+		int  i = 0;
+		for(TrafficLink link : tfData.links){
+			System.out.println("link " + i);
+			System.out.println("down max " + link.downStreamCumulativeMax);
+			System.out.println("up max " + link.upStreamCumulativeMax);
+			i++;
+		}
 		
-		//run the DTA
-		
-		//collect output.
-		
-//		//code to debug computeTurningFractions
+//		//code to quick - debug computeTurningFractions
 //		int index = 0;
 //
 //		for(ArrayList<double[][]> turningFraction : turningFractions){
@@ -327,13 +323,6 @@ public class TrafficSimulator {
 								//compute turningFractions for the current node and time click
 								//Remark: turning Fraction = given turning fractino + route Fraction + flow according to ODMatrix
 								//TODO Review in Cascetta's book
-								if(nodeIndex == 10 && timeClick ==300){
-									System.out.println(incomingLinkPathIndex + " debug " +outgoingLinkPathIndex);
-									System.out.println(turningFractions.get(nodeIndex).get(timeClick)[incomingLinkPathIndex][outgoingLinkPathIndex]);
-									System.out.println(pathFinder.getRouteFractions().get(setOfRoutesIndex).get(routeIndex)[timeClick]);
-									System.out.println(expandedODMatrices.get(timeClickStartODFlow)[ODPairs[setOfRoutesIndex].getIndexStartNode(tfData.nodes)][ODPairs[setOfRoutesIndex].getIndexEndNode(tfData.nodes)]);
-								}
-								
 
 								turningFractions.get(nodeIndex).get(timeClick)[incomingLinkPathIndex][outgoingLinkPathIndex] 
 										= turningFractions.get(nodeIndex).get(timeClick)[incomingLinkPathIndex][outgoingLinkPathIndex]
