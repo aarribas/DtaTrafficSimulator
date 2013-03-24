@@ -24,6 +24,7 @@ public class TrafficSimulator {
 	private double tStep;
 	private ArrayList<double[]> linkTravelTimes = new ArrayList<double[]>();
 	private ArrayList<double[]> linkSpeeds = new ArrayList<double[]>();
+	private ArrayList<double[]> linkSpeedsAtArrival = new ArrayList<double[]>();
 	private ArrayList<ArrayList<double[][]>> turningFractions;
 	private PathFinder pathFinder;
 
@@ -33,7 +34,12 @@ public class TrafficSimulator {
 
 		TrafficDataLoader loader = new TrafficDataLoader();
 		tfData = loader.load(fileName);
+		
+		
 
+	}
+	
+	public void runDNLOnly(){
 		expandODMatrices();
 		computeODPairs();
 		computeInitialTravelTimes();
@@ -81,25 +87,104 @@ public class TrafficSimulator {
 		LTM ltm = new LTM(expandedODMatrices, tfData, tEnd, tStep, turningFractions);
 		ltm.run();
 		
-//		//code to quick - debug cumulatives
-//		System.out.println(Arrays.toString(tfData.links.get(0).downStreamCumulative));
-//		for(int i= 0; i < tfData.links.get(0).downStreamCumulative.length; i++){
-//			System.out.println(i);
-//			System.out.println(tfData.links.get(0).downStreamCumulative[i]);
-//		}
-//		int  i = 0;
-//		for(TrafficLink link : tfData.links){
-//			System.out.println("link " + i);
-//			System.out.println("down max " + link.downStreamCumulativeMax);
-//			System.out.println("up max " + link.upStreamCumulativeMax);
-//			i++;
-//		}
+		//code to quick - debug cumulatives
+		System.out.println(Arrays.toString(tfData.links.get(0).downStreamCumulative));
+		for(int i= 0; i < tfData.links.get(0).downStreamCumulative.length; i++){
+			System.out.println(i);
+			System.out.println(tfData.links.get(0).downStreamCumulative[i]);
+		}
+		int  i = 0;
+		for(TrafficLink link : tfData.links){
+			System.out.println("link " + i);
+			System.out.println("down max " + link.downStreamCumulativeMax);
+			System.out.println("up max " + link.upStreamCumulativeMax);
+			i++;
+		}
 		
 		double[][] speeds = CumulativeBasedCalculator.calculateCumulativeToSpeeds(tfData.links, tEnd, tStep);
 		double[][] flows = CumulativeBasedCalculator.calculateCumulativeToFlows(tfData.links, SIM_FLOW_OPTION.UPSTREAM, tEnd, tStep);
 		double[][] density = CumulativeBasedCalculator.calculateCumulativeToDensity(tfData.links, tEnd, tStep);
-		System.out.println("END");
+		System.out.println("SUCCESFUL END OF LTM");
 	}
+
+	public void runDTA(int maxIterations){
+		
+		//init DTA
+		int iteration = 1;
+		
+		expandODMatrices();
+		computeODPairs();
+		computeInitialTravelTimes();
+		computeInitialSpeeds();
+		
+		//compute initial paths
+		pathFinder = new DynamicDijkstra(tfData, ODPairs, linkTravelTimes, tEnd, tStep, 0, 50);
+		pathFinder.findPath();
+		
+		//setup the ltm (note that only the updated turningFractions are passed to run)
+		LTM ltm = new LTM(expandedODMatrices, tfData, tEnd, tStep,turningFractions);
+
+		//main loop
+		while(iteration<maxIterations){
+			
+			//calculateTurningFRactions
+			computeTurningFractions(50, 0, linkSpeedsAtArrival);
+			
+			//update link data calling the LTM
+			ltm.run();
+		
+			//compute link speeds and link speeds at arrival
+			updateSpeeds();
+			
+			//compute travelTime
+			updateTravelTimes();
+			
+			//calculate new routes and routeFractions using dijkstra
+			pathFinder.findPath();
+			
+			//recompute the gap
+			
+			//update routeFractions by means of the path swapping heuristic
+			
+			//move on to next iteration
+			iteration++;
+		}
+		
+		//recalculate turningFractions for final iteration
+		computeTurningFractions(50, 0, linkSpeedsAtArrival);
+		
+		//obtain final link data using LTM
+		ltm.run();
+		
+	}
+	
+	private void updateSpeeds(){
+
+		//obtain simulated speeds
+		double [][] speeds = CumulativeBasedCalculator.calculateCumulativeToSpeeds(tfData.links, tEnd, tStep);
+		double [][] speedsAtArrival = CumulativeBasedCalculator.calculateCumulativeToSpeedsAtArrival(tfData.links, tEnd, tStep);
+		
+		//update linkSpeeds and linkSpeedsAtArrival
+		for(int linkIndex = 0; linkIndex < linkSpeeds.size(); linkIndex++){
+			linkSpeeds.set(linkIndex, speeds[linkIndex]);
+			linkSpeedsAtArrival.set(linkIndex, speedsAtArrival[linkIndex]);
+		}
+	}
+	
+	private void updateTravelTimes(){
+		
+		double[][] travelTime  = new double[linkTravelTimes.size()][(int)(tEnd/tStep)];
+
+		//update travelTime per link as length/speed (instantaneous)
+		for(int linkIndex = 0; linkIndex < linkSpeeds.size(); linkIndex++){
+			for(int timeClick = 0; timeClick < (int)(tEnd/tStep); timeClick++){
+				travelTime[linkIndex][timeClick] =  tfData.links.get(linkIndex).length / linkSpeeds.get(linkIndex)[timeClick];
+			}
+			linkTravelTimes.set(linkIndex, travelTime[linkIndex]);
+		}
+		
+	}
+
 
 	private void expandODMatrices(){
 
@@ -209,12 +294,15 @@ public class TrafficSimulator {
 
 		for(TrafficLink link : tfData.links){
 			double[] speeds = new double[(int)(tEnd/tStep)];
-
-			//we initialize traveltimes to the linkfreespeed
+			double[] speedsAtArrival = new double[(int)(tEnd/tStep)]; 
+			
+			//we initialize speepds to the linkfreespeed
 			java.util.Arrays.fill(speeds, link.freeSpeed);	
+			java.util.Arrays.fill(speedsAtArrival, link.freeSpeed);	
 
 			//add the corresponding array of freespeeds
 			linkSpeeds.add(speeds);
+			linkSpeedsAtArrival.add(speeds);
 		}
 
 
@@ -425,39 +513,4 @@ public class TrafficSimulator {
 		}
 	}
 	
-	private void runDTA(){
-		
-		//init LTM
-		int iteration = 1;
-		int maxIterations = 30;
-		
-		//main loop
-		while(iteration<maxIterations){
-			
-			//calculateTurningFRactions
-			
-			//update link data calling the LTM
-			
-			//obtain simulated speeds
-			
-			//obtain simulated speeds at arrival
-			
-			//compute travelTime
-			
-			//calculate new routes and routeFractions using dijkstra
-			
-			//recompute the gap
-			
-			//update routeFractions by means of the path swapping heuristic
-			
-			//move on to next iteration
-			iteration++;
-		}
-		
-		//recalculate turningFractions for final iteration
-		
-		//obtain final link data using LTM
-		
-	}
-
 }
