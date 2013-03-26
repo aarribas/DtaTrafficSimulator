@@ -18,7 +18,7 @@ public class TravelTimeManager {
 			travelCost = 0;
 		}
 		else{
-			if(indexTimeBefore > travelCosts.length - 1){
+			if(indexTimeBefore >= travelCosts.length - 1){
 				//if we have passed the last time click the travelTime is the last travel time
 				//as in matlab code.
 				travelCost = travelCosts[travelCosts.length-1];

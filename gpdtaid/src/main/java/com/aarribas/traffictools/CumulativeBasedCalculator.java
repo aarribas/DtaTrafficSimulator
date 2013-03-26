@@ -54,7 +54,6 @@ public class CumulativeBasedCalculator {
 
 		double cumulative;
 
-
 		//fix click before
 		int tClickBefore = Math.min((int)(t/tStep), cumulatives.length-1);
 		
@@ -67,9 +66,7 @@ public class CumulativeBasedCalculator {
 			cumulative = 0;
 		}
 		else{
-
-
-
+			
 			double tempFasterTime = tClickBefore*tStep;
 			double tempFasterCumulative = cumulatives[tClickBefore];
 			double tInt = (t-tempFasterTime)/((tClickAfter*tStep)-tempFasterTime);
@@ -134,12 +131,17 @@ public class CumulativeBasedCalculator {
 	static public double[][] calculateCumulativeToSpeedsAtArrival(ArrayList<TrafficLink>links, double tEnd, double tStep){
 
 		double[][] simSpeeds = new double[links.size()][(int)(tEnd/tStep)];
+		
+		//Initialise to freeSpeed for each instant
+		for(int linkIndex = 0; linkIndex<links.size(); linkIndex++){
+			Arrays.fill(simSpeeds[linkIndex], links.get(linkIndex).freeSpeed);
+		}
+		
 
 		for(int timeClick=0; timeClick<(int)(tEnd/tStep); timeClick++){
 			for(int linkIndex = 0; linkIndex<links.size(); linkIndex++){
 				TrafficLink link = links.get(linkIndex);
-				//Initialise to freeSpeed for each instant
-				Arrays.fill(simSpeeds[linkIndex], link.freeSpeed);
+				
 				double time = calculateCumulativeTime(link.upStreamCumulative, link.downStreamCumulative[timeClick], tEnd, tStep);
 
 				//compute simspeed depending on the simulation time
@@ -168,7 +170,7 @@ public class CumulativeBasedCalculator {
 				}
 
 
-				if(link.upStreamCumulative[Math.min((int)(tEnd/tStep), (int)(timeClick + 10))] - link.upStreamCumulative[Math.max(1, timeClick)]<0.001){
+				if(link.upStreamCumulative[Math.min((int)(tEnd/tStep)-1, (int)(timeClick + 10))] - link.upStreamCumulative[Math.max(1, timeClick)]<0.001){
 					//very low flow on link => set to freespeed
 					simSpeeds[linkIndex][timeClick] = link.freeSpeed;
 				}

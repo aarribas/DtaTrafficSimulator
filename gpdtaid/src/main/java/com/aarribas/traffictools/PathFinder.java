@@ -7,7 +7,7 @@ import com.aarribas.dtasim.TrafficODPair;
 public abstract class PathFinder {
 	
 	protected ArrayList<ArrayList<PathRepresentation>> routes = null;
-	protected ArrayList<ArrayList<Integer[]>>  routeFractions = null;
+	protected ArrayList<ArrayList<Double[]>>  routeFractions = null;
 	protected TrafficData tfData;
 	protected TrafficODPair[] ODPairs; 
 	protected double tEnd, tStep;
@@ -16,10 +16,9 @@ public abstract class PathFinder {
 	
 	enum routeIntervalOption{LAST_OUT, FIRST_IN};
 
-	public PathFinder(TrafficData tfData, TrafficODPair[] ODPairs, ArrayList<double[]> travelCosts, double tEnd, double tStep,int timeClicksShift, int timeClicksOfRouteInterval) {
+	public PathFinder(TrafficData tfData, TrafficODPair[] ODPairs, double tEnd, double tStep,int timeClicksShift, int timeClicksOfRouteInterval) {
 		this.tfData = tfData; 
 		this.ODPairs = ODPairs;
-		this.travelCosts = travelCosts;
 		this.tEnd = tEnd;
 		this.tStep = tStep;
 		this.timeClicksOfRouteInterval = timeClicksOfRouteInterval;
@@ -29,11 +28,11 @@ public abstract class PathFinder {
 		
 		//initialise empty routes and routeFractions
 		this.routes = new ArrayList<ArrayList<PathRepresentation>>();
-		this.routeFractions = new ArrayList<ArrayList<Integer[]>>();
+		this.routeFractions = new ArrayList<ArrayList<Double[]>>();
 	}
 	
-	public PathFinder(TrafficData tfData, TrafficODPair[] ODPairs, ArrayList<double[]> travelCosts, double tEnd, double tStep,int timeClicksShift, int timeClicksOfRouteInterval, routeIntervalOption option) {
-		this(tfData, ODPairs, travelCosts, tEnd, tStep, timeClicksShift, timeClicksOfRouteInterval);
+	public PathFinder(TrafficData tfData, TrafficODPair[] ODPairs, double tEnd, double tStep,int timeClicksShift, int timeClicksOfRouteInterval, routeIntervalOption option) {
+		this(tfData, ODPairs, tEnd, tStep, timeClicksShift, timeClicksOfRouteInterval);
 		switch(option){
 		case FIRST_IN:
 			timeClicksOfAdditionalRouteInterval = timeClicksOfRouteInterval;
@@ -43,13 +42,13 @@ public abstract class PathFinder {
 		}
 	}
 	
-	abstract public void findPath();
+	abstract public void findPath(ArrayList<double[]> travelCosts);
 	
 	public ArrayList<ArrayList<PathRepresentation>> getRoutes(){
 		return routes;
 	}
 	
-	public ArrayList<ArrayList<Integer[]>> getRouteFractions(){
+	public ArrayList<ArrayList<Double[]>> getRouteFractions(){
 		return routeFractions;
 	}
 

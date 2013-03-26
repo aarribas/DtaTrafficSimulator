@@ -11,15 +11,14 @@ public class LTM implements TrafficNetworkModel {
 	private TrafficData tfData = null;
 	private double tEnd;
 	private double tStep;
-	private ArrayList<ArrayList<double[][]>> turningFractions;
+	private ArrayList<ArrayList<double[][]>> turningFractions = null;
 	private TrafficNodeModel nodeModel = null;
 
-	public LTM(ArrayList<double[][]> expandedODMatrices, TrafficData tfData, double tEnd, double tStep, ArrayList<ArrayList<double[][]>> turningFractions){
+	public LTM(ArrayList<double[][]> expandedODMatrices, TrafficData tfData, double tEnd, double tStep){
 		this.expandedODMatrices = expandedODMatrices;
 		this.tfData = tfData;
 		this.tEnd = tEnd;
 		this.tStep = tStep;
-		this.turningFractions = turningFractions;
 		this.nodeModel = new TrafficNodeModel(tfData, tStep);
 		init();
 
@@ -92,7 +91,8 @@ public class LTM implements TrafficNetworkModel {
 
 	}
 
-	public void run() {
+	public void run(ArrayList<ArrayList<double[][]>> turningFractions) {
+		this.turningFractions  = turningFractions;
 		
 		//initialise the cumulative maximas
 		initLinkCumulativeMaximas();

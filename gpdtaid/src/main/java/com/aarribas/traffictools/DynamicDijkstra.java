@@ -6,15 +6,18 @@ import com.aarribas.dtasim.TrafficODPair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Scanner;
 
 public class DynamicDijkstra extends PathFinder {
 
-	public DynamicDijkstra(TrafficData tfData, TrafficODPair[] ODPairs,ArrayList<double[]> travelCosts, double tEnd, double tStep, int timeClicksShift, int timeClicksOfRouteInterval) {
-		super(tfData, ODPairs, travelCosts, tEnd, tStep, timeClicksShift, timeClicksOfRouteInterval);
+	public DynamicDijkstra(TrafficData tfData, TrafficODPair[] ODPairs, double tEnd, double tStep, int timeClicksShift, int timeClicksOfRouteInterval) {
+		super(tfData, ODPairs,tEnd, tStep, timeClicksShift, timeClicksOfRouteInterval);
 	}
 
 	@Override
-	public void findPath(){
+	public void findPath(ArrayList<double[]> travelCosts){
+		this.travelCosts = travelCosts;
+		
 		if(routes.isEmpty()){
 
 			//look for a path for each od pair per routeInterval
@@ -48,8 +51,8 @@ public class DynamicDijkstra extends PathFinder {
 						addPathRepresentation(odIndex,new PathRepresentation(pathNodeIndexes, pathLinkIndexes));
 
 						//save the routefraction too
-						Integer[] routeFraction = new Integer[(int) (tEnd/tStep)];
-						Arrays.fill(routeFraction, 1);
+						Double[] routeFraction = new Double[(int) (tEnd/tStep)];
+						Arrays.fill(routeFraction, 1.0);
 						addRouteFraction(odIndex, routeFraction);
 						routeDataSavedForODPair = true;
 					}
@@ -63,26 +66,31 @@ public class DynamicDijkstra extends PathFinder {
 
 		}
 		else{
-
-
 			//look for a path for each od pair per routeInterval
 			for(int odIndex = 0; odIndex < ODPairs.length; odIndex++){
 
 				int previousTimeClick = 0;
+				
 				//we start at the interval 0
 				int interval = 0;
 				int timeClick = timeClicksShift + timeClicksOfRouteInterval*interval; //equals timeClickShift of course
-				int shortestRouteIndex = 0;
+				int shortestRouteIndex = -1;
 
 				while( timeClick < (int) (tEnd/tStep)){
 
-					double departureTime = (timeClick - timeClicksOfAdditionalRouteInterval) * tStep;
+					
+					double departureTime = Math.max(0.0,(timeClick - timeClicksOfAdditionalRouteInterval)) * tStep;
 					int indexStartNode = ODPairs[odIndex].getIndexStartNode(tfData.nodes);
 					int indexEndNode = ODPairs[odIndex].getIndexEndNode(tfData.nodes);
-
+					
+					System.out.println(departureTime);
 					//compute parents with source the start Node, departure time the 
 					int[] parents = computeParents(indexStartNode, departureTime );
-
+					
+					System.out.println(Arrays.toString(parents));
+					
+					
+					
 					//compute node indexes of nodes that form the path
 					Integer[] pathNodeIndexes = new Integer[0];
 					pathNodeIndexes = computeNodeIndexesInPath(indexStartNode, indexEndNode, parents).toArray(pathNodeIndexes);
@@ -94,24 +102,32 @@ public class DynamicDijkstra extends PathFinder {
 					boolean routeAlreadyFound = false;
 
 					if(routes.get(odIndex).isEmpty()){
+						System.out.println("it happens1");
 						//save the corresponding path representation
 						addPathRepresentation(odIndex,new PathRepresentation(pathNodeIndexes, pathLinkIndexes));
 
 						//save the routefraction too
-						Integer[] routeFraction = new Integer[(int) (tEnd/tStep)];
-						Arrays.fill(routeFraction, 1);
+						Double[] routeFraction = new Double[(int) (tEnd/tStep)];
+						Arrays.fill(routeFraction, 1.0);
 						addRouteFraction(odIndex, routeFraction);
 					}
 					else{
 						PathRepresentation tempPathRepresentation = new PathRepresentation(pathNodeIndexes, pathLinkIndexes);
-
+						tempPathRepresentation.toString();
 						//compare to each route for that odpair
 						for(int routeIndex = 0; routeIndex < routes.get(odIndex).size(); routeIndex++){
+							System.out.println(tempPathRepresentation.toString());
+							System.out.println(routes.get(odIndex).get(routeIndex).toString());
+							
 							if(tempPathRepresentation.equals(routes.get(odIndex).get(routeIndex))){
 								routeAlreadyFound = true;
 								shortestRouteIndex = routeIndex;
+								
+								break;
 							}
 							else{
+								System.out.println("it happens");
+						
 								routeAlreadyFound = false;
 							}
 						}
@@ -123,41 +139,35 @@ public class DynamicDijkstra extends PathFinder {
 							shortestRouteIndex = routes.get(odIndex).size() -1;
 
 							//add routefractions to 0
-							Integer[] routeFraction = new Integer[(int) (tEnd/tStep)];
-							Arrays.fill(routeFraction, 0);
+							Double[] routeFraction = new Double[(int) (tEnd/tStep)];
+							Arrays.fill(routeFraction, 0.0);
 							addRouteFraction(odIndex, routeFraction);
 						}
 
-						//updated routeFractions accordingly
+						//update routeFractions accordingly
 						for(int routeFractionIndex = 0; routeFractionIndex<routeFractions.get(odIndex).size(); routeFractionIndex++){
-							if(routeFractionIndex == shortestRouteIndex){
-								Arrays.fill(routeFractions.get(odIndex).get(routeFractionIndex), previousTimeClick, timeClick, 1);
-							}
-							else{
-								Arrays.fill(routeFractions.get(odIndex).get(routeFractionIndex), previousTimeClick, timeClick, 0);
-							}
+							System.out.println("clean up");
+							Arrays.fill(routeFractions.get(odIndex).get(routeFractionIndex), previousTimeClick, timeClick, 0.0);
 						}
+						Arrays.fill(routeFractions.get(odIndex).get(shortestRouteIndex), previousTimeClick, timeClick, 1.0);
 						//move to the next relevant time click in term of routeIntervals
 						previousTimeClick = timeClick + 1;	
-					}
-
-					//fix route fractions till last timeclick
-					for(int routeFractionIndex = 0; routeFractionIndex<routeFractions.get(odIndex).size(); routeFractionIndex++){
-						if(routeFractionIndex == shortestRouteIndex){
-							Arrays.fill(routeFractions.get(odIndex).get(routeFractionIndex), previousTimeClick, (int) (tEnd/tStep), 1);
-						}
-						else{
-							Arrays.fill(routeFractions.get(odIndex).get(routeFractionIndex), previousTimeClick, (int) (tEnd/tStep), 0);
-						}
 					}
 
 					//move to the next route interval
 					interval++;
 					timeClick = timeClicksShift + timeClicksOfRouteInterval*interval; 
+
 				}
+				//fix route fractions till last timeclick
+				for(int routeFractionIndex = 0; routeFractionIndex<routeFractions.get(odIndex).size(); routeFractionIndex++){
+						Arrays.fill(routeFractions.get(odIndex).get(routeFractionIndex), previousTimeClick, (int) (tEnd/tStep)-1, 0.0);
+				}
+				
+				Arrays.fill(routeFractions.get(odIndex).get(shortestRouteIndex), previousTimeClick, (int) (tEnd/tStep)-1, 1.0);
 			}
 		}
-		
+
 	}
 
 	private void addPathRepresentation(int odIndex, PathRepresentation pathRepresentation){
@@ -180,14 +190,14 @@ public class DynamicDijkstra extends PathFinder {
 
 	}
 
-	private void addRouteFraction(int odIndex, Integer[] routeFraction){
+	private void addRouteFraction(int odIndex, Double[] routeFraction){
 
 		//TODO improve this part - it should be possible to use one single add.
 
 		//if no routes for index increment the size	
 		if (odIndex <= routeFractions.size())
 		{
-			routeFractions.add(new ArrayList<Integer[]>());
+			routeFractions.add(new ArrayList<Double[]>());
 		}
 
 		//if no path routeFraction add the first one
@@ -205,7 +215,7 @@ public class DynamicDijkstra extends PathFinder {
 	private int[] computeParents(int source, double departureTime){
 
 		int numNodes = tfData.nodes.size();
-		int numLinks = numNodes + 1;
+		int numLinks = tfData.links.size();
 
 		//initialise arrays.
 		boolean[] visited = new boolean[numNodes];
@@ -220,9 +230,10 @@ public class DynamicDijkstra extends PathFinder {
 		distances[source] = 0;
 
 		//in dynamic dijsktra apparently it is sufficient to iterate numNodes -1
-		for(int iteration = 0; iteration<numNodes - 1; iteration++ ){
-
+		for(int iteration = 0; iteration<numNodes-1; iteration++ ){
+			
 			double[] tempDistances = new double[numNodes];
+			Arrays.fill(tempDistances, 0);
 
 			//for all nodes set preliminary distances
 			for(int node =0; node<numNodes; node++){
@@ -245,7 +256,7 @@ public class DynamicDijkstra extends PathFinder {
 					indexMinNode = indexCandidateMin;
 				}
 			}
-
+			
 			//flag it as visited
 			visited[indexMinNode] = true;
 
@@ -264,17 +275,14 @@ public class DynamicDijkstra extends PathFinder {
 							neighborgNodeIndex = i;
 							break;
 						}
-					}	
-
+					}
 					double completeTravelTime = TravelTimeManager.computeTravelTimeForGivenCost(travelCosts.get(linkIndex), departureTime + distances[indexMinNode], tEnd, tStep);
 				
 					if((completeTravelTime + distances[indexMinNode]) < distances[neighborgNodeIndex]){
-						//System.out.println("updated");
 						distances[neighborgNodeIndex] = distances[indexMinNode] + completeTravelTime;
 						parents[neighborgNodeIndex] = indexMinNode;
 					}
-
-
+					
 				}
 
 			}
