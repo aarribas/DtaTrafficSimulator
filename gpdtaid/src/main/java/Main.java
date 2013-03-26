@@ -7,7 +7,7 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 
-		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/toy_par.mat", 3-0.004, 0.004);
+		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/toy_par.mat", 3, 0.004);
 		//sim.runDNLOnly();
 		sim.runDTA(30);
 	}

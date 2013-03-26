@@ -2,6 +2,8 @@ package com.aarribas.traffictools;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Scanner;
+
 import com.aarribas.dtasim.TrafficLink;
 
 public class CumulativeBasedCalculator {
@@ -96,6 +98,7 @@ public class CumulativeBasedCalculator {
 			for(int linkIndex = 0; linkIndex<links.size(); linkIndex++){
 				TrafficLink link = links.get(linkIndex);
 				
+				
 				double time = calculateCumulativeTime(link.downStreamCumulative, link.upStreamCumulative[timeClick], tEnd, tStep);
 				
 				//compute simspeed depending on the simulation time
@@ -123,7 +126,6 @@ public class CumulativeBasedCalculator {
 			}
 
 		}
-		
 		return simSpeeds;
 	}
 

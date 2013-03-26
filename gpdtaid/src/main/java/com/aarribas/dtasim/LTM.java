@@ -2,6 +2,8 @@ package com.aarribas.dtasim;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Scanner;
+
 import com.aarribas.traffictools.CumulativeBasedCalculator;
 import com.aarribas.utils.Pair;
 
@@ -112,8 +114,14 @@ public class LTM implements TrafficNetworkModel {
 
 					//origin node, set upstream cumulative only
 					for(TrafficLink link: node.outgoingLinks){
-						link.upStreamCumulative[timeClick] = calculateUpstreamCumulativeGivenOriginNode(nodeIndex, link, timeClick);					
-					}
+						
+						link.upStreamCumulative[timeClick] = calculateUpstreamCumulativeGivenOriginNode(nodeIndex, link, timeClick);
+						System.out.println("node" + tfData.nodes.get(nodeIndex).id);
+						System.out.println("link" + link.id);
+						System.out.println("cumu" + link.upStreamCumulative[timeClick]);
+						Scanner scan = new Scanner(System.in);
+						scan.nextLine();
+						}
 
 				}
 				else if (node.outgoingLinks.isEmpty()){
@@ -277,10 +285,16 @@ public class LTM implements TrafficNetworkModel {
 			sum = sum + expandedODMatrices.get(timeClick)[nodeIndex][possiblePairNodeIndex];
 
 		}
+		
+	
+		System.out.println("sum" + sum);
+		System.out.println(nodeIndex);
+		System.out.println(timeClick);
 
 		//compute number of outgoinglinks
 		int numOutgoingLinks = tfData.nodes.get(nodeIndex).outgoingLinks.size();
 		
+		System.out.println("outgoinglinks" + numOutgoingLinks);
 		
 		return link.upStreamCumulative[Math.max(0,timeClick-1)]+sum/numOutgoingLinks;
 	}

@@ -143,28 +143,74 @@ public class TrafficSimulator {
 			System.out.println("it: " + iteration);
 			//calculateTurningFRactions
 			computeTurningFractions(50, 0, linkSpeedsAtArrival);
+			
+
+
+			//		//code to quick - debug computeTurningFractions
+			//		int index = 0;
+			//
+			//		for(ArrayList<double[][]> turningFraction : turningFractions){
+			//			System.out.println(index);
+			//			if(!turningFraction.isEmpty()){
+			//				System.out.println("NOT EMPTY");
+			//				int index2 = 0;
+			//				for(double[][] turFrac: turningFraction){
+			//					String newS = new String();
+			//
+			//					for(double[] turFracR : turFrac){
+			//						newS = newS.concat(Arrays.toString(turFracR) + index2);
+			//					}
+			//					index2++;
+			//					System.out.println(newS);
+			//				}
+			//			}
+			//			else{
+			//				System.out.println("EMPTY");
+			//			}
+			//
+			//
+			//			
+			//
+			//				Scanner scan = new Scanner(System.in);
+			//				scan.nextLine();
+			//
+			//			
+			//			index++;
+			//
+			//		}
+
 
 			//update link data calling the LTM
 			ltm.run(turningFractions);
+			
+
+			int  i = 0;
+			for(TrafficLink link : tfData.links){
+				System.out.println("link " + i);
+				System.out.println("down max " + link.downStreamCumulativeMax);
+				System.out.println("up max " + link.upStreamCumulativeMax);
+				i++;
+			}
+			
 
 			//compute link speeds and link speeds at arrival
 			updateSpeeds();
 		
-			
-			for(int i=0; i< linkTravelTimes.size(); i++){
-				System.out.println(Arrays.toString(linkTravelTimes.get(i)));
-				Scanner scan  = new Scanner(System.in);
-				scan.nextLine();
-			}
+//			
+//			for(int i=0; i< linkTravelTimes.size(); i++){
+//				System.out.println(Arrays.toString(linkTravelTimes.get(i)));
+//				Scanner scan  = new Scanner(System.in);
+//				scan.nextLine();
+//			}
 			
 			//compute travelTime
 			updateTravelTimes();
-			
-			for(int i=0; i< linkTravelTimes.size(); i++){
-				System.out.println(Arrays.toString(linkTravelTimes.get(i)));
-				Scanner scan  = new Scanner(System.in);
-				scan.nextLine();
-			}
+//			
+//			for(int i=0; i< linkTravelTimes.size(); i++){
+//				System.out.println(Arrays.toString(linkTravelTimes.get(i)));
+//				Scanner scan  = new Scanner(System.in);
+//				scan.nextLine();
+//			}
 
 			//calculate new routes and routeFractions using dijkstra
 			pathFinder.findPath(linkTravelTimes);
@@ -346,23 +392,20 @@ public class TrafficSimulator {
 			}
 			else{
 
-				//check if we change timeslice at a time not multiple of the tStep
-				//the first timeSlice is expected to be 0 this is a mistake in the .mat
-				//TO DO change .mat or adapt code to more reasonable values
 				if((ctime + tStep) > tfData.timeSlices.get(timeSliceNumber+1) + doubleErrorTolerance && ctime !=0 ){
 
 					//part of the flow in the matrix is due to OD prior to timeSlice change
 					expandedODMatrix = new Array2DRowRealMatrix(tfData.ODMatrices.get(timeSliceNumber));
-					expandedODMatrix = expandedODMatrix.scalarMultiply(tfData.timeSlices.get(timeSliceNumber) - ctime);
+					expandedODMatrix = expandedODMatrix.scalarMultiply(tfData.timeSlices.get(timeSliceNumber+1) - ctime);
 
 					//the remaining flow is due to the OD in the next timeSlice
 					RealMatrix temp = new Array2DRowRealMatrix(tfData.ODMatrices.get(timeSliceNumber + 1));
-					temp = temp.scalarMultiply(tStep - tfData.timeSlices.get(timeSliceNumber));
+					temp = temp.scalarMultiply((ctime+tStep) - tfData.timeSlices.get(timeSliceNumber+1));
 					expandedODMatrix = expandedODMatrix.add(temp);
 
 				}
 				else{
-					//if there is no timeslice change it is save to add the contribution of the ODMatrix for that timeSlice
+					//if there is no timeslice change it is safe to add the contribution of the ODMatrix for that timeSlice
 					expandedODMatrix = new Array2DRowRealMatrix(tfData.ODMatrices.get(timeSliceNumber));
 					expandedODMatrix = expandedODMatrix.scalarMultiply(tStep);
 				}
