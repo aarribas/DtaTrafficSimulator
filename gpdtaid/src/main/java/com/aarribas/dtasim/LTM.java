@@ -116,11 +116,11 @@ public class LTM implements TrafficNetworkModel {
 					for(TrafficLink link: node.outgoingLinks){
 						
 						link.upStreamCumulative[timeClick] = calculateUpstreamCumulativeGivenOriginNode(nodeIndex, link, timeClick);
-						System.out.println("node" + tfData.nodes.get(nodeIndex).id);
-						System.out.println("link" + link.id);
-						System.out.println("cumu" + link.upStreamCumulative[timeClick]);
-						Scanner scan = new Scanner(System.in);
-						scan.nextLine();
+//						System.out.println("node" + tfData.nodes.get(nodeIndex).id);
+//						System.out.println("link" + link.id);
+//						System.out.println("cumu" + link.upStreamCumulative[timeClick]);
+//						Scanner scan = new Scanner(System.in);
+//						scan.nextLine();
 						}
 
 				}
@@ -286,15 +286,15 @@ public class LTM implements TrafficNetworkModel {
 
 		}
 		
-	
-		System.out.println("sum" + sum);
-		System.out.println(nodeIndex);
-		System.out.println(timeClick);
+//	
+//		System.out.println("sum" + sum);
+//		System.out.println(nodeIndex);
+//		System.out.println(timeClick);
 
 		//compute number of outgoinglinks
 		int numOutgoingLinks = tfData.nodes.get(nodeIndex).outgoingLinks.size();
 		
-		System.out.println("outgoinglinks" + numOutgoingLinks);
+//		System.out.println("outgoinglinks" + numOutgoingLinks);
 		
 		return link.upStreamCumulative[Math.max(0,timeClick-1)]+sum/numOutgoingLinks;
 	}

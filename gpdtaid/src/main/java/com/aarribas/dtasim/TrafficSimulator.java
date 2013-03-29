@@ -90,18 +90,18 @@ public class TrafficSimulator {
 		ltm.run(turningFractions);
 
 		//code to quick - debug cumulatives
-		System.out.println(Arrays.toString(tfData.links.get(0).downStreamCumulative));
-		for(int i= 0; i < tfData.links.get(0).downStreamCumulative.length; i++){
-			System.out.println(i);
-			System.out.println(tfData.links.get(0).downStreamCumulative[i]);
-		}
-		int  i = 0;
-		for(TrafficLink link : tfData.links){
-			System.out.println("link " + i);
-			System.out.println("down max " + link.downStreamCumulativeMax);
-			System.out.println("up max " + link.upStreamCumulativeMax);
-			i++;
-		}
+//		System.out.println(Arrays.toString(tfData.links.get(0).downStreamCumulative));
+//		for(int i= 0; i < tfData.links.get(0).downStreamCumulative.length; i++){
+//			System.out.println(i);
+//			System.out.println(tfData.links.get(0).downStreamCumulative[i]);
+//		}
+//		int  i = 0;
+//		for(TrafficLink link : tfData.links){
+//			System.out.println("link " + i);
+//			System.out.println("down max " + link.downStreamCumulativeMax);
+//			System.out.println("up max " + link.upStreamCumulativeMax);
+//			i++;
+//		}
 
 		double[][] speeds = CumulativeBasedCalculator.calculateCumulativeToSpeeds(tfData.links, tEnd, tStep);
 		double[][] flows = CumulativeBasedCalculator.calculateCumulativeToFlows(tfData.links, SIM_FLOW_OPTION.UPSTREAM, tEnd, tStep);
@@ -113,7 +113,7 @@ public class TrafficSimulator {
 
 		//init DTA
 		int iteration = 1;
-		//save previous routes and routefractions
+		//define routes and routeFractions to be used
 		ArrayList< ArrayList<PathRepresentation>> oldRoutes;
 		ArrayList<ArrayList<Double[]>> oldRouteFractions;
 		
@@ -125,7 +125,6 @@ public class TrafficSimulator {
 		computeInitialSpeeds();
 		computeInitialTravelTimes();
 	
-
 		//compute initial paths
 		pathFinder = new DynamicDijkstra(tfData, ODPairs, tEnd, tStep, 0, 50);
 		pathFinder.findPath(linkTravelTimes);
@@ -143,65 +142,57 @@ public class TrafficSimulator {
 			System.out.println("it: " + iteration);
 			//calculateTurningFRactions
 			computeTurningFractions(50, 0, linkSpeedsAtArrival);
-			
-
-
-			//		//code to quick - debug computeTurningFractions
-			//		int index = 0;
-			//
-			//		for(ArrayList<double[][]> turningFraction : turningFractions){
-			//			System.out.println(index);
-			//			if(!turningFraction.isEmpty()){
-			//				System.out.println("NOT EMPTY");
-			//				int index2 = 0;
-			//				for(double[][] turFrac: turningFraction){
-			//					String newS = new String();
-			//
-			//					for(double[] turFracR : turFrac){
-			//						newS = newS.concat(Arrays.toString(turFracR) + index2);
-			//					}
-			//					index2++;
-			//					System.out.println(newS);
-			//				}
-			//			}
-			//			else{
-			//				System.out.println("EMPTY");
-			//			}
-			//
-			//
-			//			
-			//
-			//				Scanner scan = new Scanner(System.in);
-			//				scan.nextLine();
-			//
-			//			
-			//			index++;
-			//
-			//		}
+	
+//					//code to quick - debug computeTurningFractions
+//					int index = 0;
+//			
+//					for(ArrayList<double[][]> turningFraction : turningFractions){
+//						System.out.println(index);
+//						if(!turningFraction.isEmpty()){
+//							System.out.println("NOT EMPTY");
+//							int index2 = 0;
+//							for(double[][] turFrac: turningFraction){
+//								String newS = new String();
+//			
+//								for(double[] turFracR : turFrac){
+//									newS = newS.concat(Arrays.toString(turFracR) + index2);
+//								}
+//								index2++;
+//								System.out.println(newS);
+//							}
+//						}
+//						else{
+//							System.out.println("EMPTY");
+//						}
+//			
+//			
+//						
+//			
+//							Scanner scan = new Scanner(System.in);
+//							scan.nextLine();
+//			
+//						
+//						index++;
+//			
+//					}
 
 
 			//update link data calling the LTM
 			ltm.run(turningFractions);
 			
 
-			int  i = 0;
-			for(TrafficLink link : tfData.links){
-				System.out.println("link " + i);
-				System.out.println("down max " + link.downStreamCumulativeMax);
-				System.out.println("up max " + link.upStreamCumulativeMax);
-				i++;
-			}
-			
+//			int  i = 0;
+//			for(TrafficLink link : tfData.links){
+//				System.out.println("link " + i);
+//				System.out.println("down max " + link.downStreamCumulativeMax);
+//				System.out.println("up max " + link.upStreamCumulativeMax);
+//				i++;
+//			}
+//			
 
 			//compute link speeds and link speeds at arrival
 			updateSpeeds();
-		
-//			
-//			for(int i=0; i< linkTravelTimes.size(); i++){
-//				System.out.println(Arrays.toString(linkTravelTimes.get(i)));
-//				Scanner scan  = new Scanner(System.in);
-//				scan.nextLine();
-//			}
+			
 			
 			//compute travelTime
 			updateTravelTimes();
@@ -221,7 +212,13 @@ public class TrafficSimulator {
 			//recalculate the gap
 			double gap = calculateGap(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions);
 			
+			
 			System.out.println("GAP:" + gap);
+			
+
+			Scanner scan = new Scanner(System.in);
+			scan.nextLine();
+			
 			//THE GAP COULD BE PLOTTED, SAVED ETC... ??? TO DO !!!
 			
 			//update routeFractions for next iteration by means of the path swapping heuristic
@@ -301,7 +298,9 @@ public class TrafficSimulator {
 				
 				
 				System.out.println(Arrays.toString(newRouteFractions.get(setOfRoutesIndex).get(routeIndex)));
-				
+				System.out.println(Arrays.toString(oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)));
+				System.out.println("indeed...");
+			
 				
 				PathRepresentation path = oldRoutes.get(setOfRoutesIndex).get(routeIndex);
 				int startNodeIndex = path.nodeIndexes[0];
@@ -319,6 +318,7 @@ public class TrafficSimulator {
 						}
 						//compute complete routeTT (route cost or travel time)
 						routeTT = routeTT + TravelTimeManager.computeTravelTimeForGivenCost(cost,timeClick*tStep + routeTT, tEnd, tStep);
+						System.out.println("routeTT in trafficsim -gap "  +routeTT);
 						
 						
 						}
@@ -327,9 +327,14 @@ public class TrafficSimulator {
 					}
 					else
 					{
-						System.out.println("update YES");
+						
 						//update gap given the previous gap cumulative and the route cost given an OD flow for this route
-						gap = gap + oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick]*routeTT*expandedODMatrices.get(timeClick)[startNodeIndex][endNodeIndex];
+						gap = gap + oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick]* routeTT*expandedODMatrices.get(timeClick)[startNodeIndex][endNodeIndex];
+						System.out.println("update YES" + gap);
+						if(oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick]!=0){
+							System.out.println("ROUTE FRAC NOT 0");
+						}
+						
 					}
 				}
 				
@@ -469,10 +474,11 @@ public class TrafficSimulator {
 	}
 
 	private void computeInitialSpeeds(){
-
+						
 		for(TrafficLink link : tfData.links){
+			
 			double[] speeds = new double[(int)(tEnd/tStep)];
-			double[] speedsAtArrival = new double[(int)(tEnd/tStep)]; 
+			double[] speedsAtArrival = new double[(int)(tEnd/tStep)];
 
 			//we initialize speepds to the linkfreespeed
 			java.util.Arrays.fill(speeds, link.freeSpeed);	
@@ -480,7 +486,8 @@ public class TrafficSimulator {
 
 			//add the corresponding array of freespeeds
 			linkSpeeds.add(speeds);
-			linkSpeedsAtArrival.add(speeds);
+			linkSpeedsAtArrival.add(speedsAtArrival);
+		
 		}
 
 

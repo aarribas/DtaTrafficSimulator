@@ -80,4 +80,11 @@ public class PathRepresentation {
 		return "nodesIndexes: " + Arrays.toString(nodeIndexes) + "\n" +
 		"linkIndexes: " + Arrays.toString(linkIndexes); 
 	}
+
+	@Override
+	public PathRepresentation clone(){
+		
+		return new PathRepresentation(nodeIndexes.clone(), linkIndexes.clone());
+		
+	}
 }

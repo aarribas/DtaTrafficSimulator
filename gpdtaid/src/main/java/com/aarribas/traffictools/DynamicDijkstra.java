@@ -147,9 +147,9 @@ public class DynamicDijkstra extends PathFinder {
 						//update routeFractions accordingly
 						for(int routeFractionIndex = 0; routeFractionIndex<routeFractions.get(odIndex).size(); routeFractionIndex++){
 							System.out.println("clean up");
-							Arrays.fill(routeFractions.get(odIndex).get(routeFractionIndex), previousTimeClick, timeClick, 0.0);
+							Arrays.fill(routeFractions.get(odIndex).get(routeFractionIndex), previousTimeClick, timeClick+1, 0.0);
 						}
-						Arrays.fill(routeFractions.get(odIndex).get(shortestRouteIndex), previousTimeClick, timeClick, 1.0);
+						Arrays.fill(routeFractions.get(odIndex).get(shortestRouteIndex), previousTimeClick, timeClick+1, 1.0);
 						//move to the next relevant time click in term of routeIntervals
 						previousTimeClick = timeClick + 1;	
 					}
