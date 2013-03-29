@@ -135,14 +135,18 @@ public class TrafficSimulator {
 
 		//setup the ltm (note that only the updated turningFractions are passed to run)
 		LTM ltm = new LTM(expandedODMatrices, tfData, tEnd, tStep);
+		
+		//create a swapping heuristic
+		TrafficSwappingHeuristicMSA  msa = new TrafficSwappingHeuristicMSA();
 
 		//main loop
 		while(iteration<maxIterations){
+			iteration++; //imitation of matlab code
 			
 			System.out.println("it: " + iteration);
 			//calculateTurningFRactions
 			computeTurningFractions(50, 0, linkSpeedsAtArrival);
-	
+//	
 //					//code to quick - debug computeTurningFractions
 //					int index = 0;
 //			
@@ -181,7 +185,7 @@ public class TrafficSimulator {
 			ltm.run(turningFractions);
 			
 
-//			int  i = 0;
+			int  i = 0;
 //			for(TrafficLink link : tfData.links){
 //				System.out.println("link " + i);
 //				System.out.println("down max " + link.downStreamCumulativeMax);
@@ -212,20 +216,28 @@ public class TrafficSimulator {
 			//recalculate the gap
 			double gap = calculateGap(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions);
 			
-			
+
 			System.out.println("GAP:" + gap);
 			
 
 			Scanner scan = new Scanner(System.in);
 			scan.nextLine();
 			
-			//THE GAP COULD BE PLOTTED, SAVED ETC... ??? TO DO !!!
 			
-			//update routeFractions for next iteration by means of the path swapping heuristic
-			msaTEST(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions, iteration);
+			//compute routeFractions for next iteration by means of the path swapping heuristic
+			msa.setup(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions, iteration);
+			msa.run();
+			
+			//save the routes and routeFractions prior to new iteration
+			oldRoutes = msa.getRoutes();
+			oldRouteFractions = msa.getRouteFractions();
+			
+			pathFinder.setRoutes(oldRoutes);
+			pathFinder.setRouteFractions(oldRouteFractions);
+
 			
 			//move on to next iteration
-			iteration++;
+			
 		}
 
 		//recalculate turningFractions for final iteration
@@ -236,54 +248,6 @@ public class TrafficSimulator {
 
 	}
 	
-	private void msaTEST(ArrayList< ArrayList<PathRepresentation>> oldRoutes,
-			ArrayList< ArrayList<Double[]>> oldRouteFractions,
-			ArrayList< ArrayList<PathRepresentation>> newRoutes,
-			ArrayList< ArrayList<Double[]>> newRouteFractions,
-			int correctiveFactor){
-		
-		ArrayList< ArrayList<Double[]>> tempRouteFractions = newRouteFractions;
-		
-		for(int setOfRoutesIndex = 0; setOfRoutesIndex< newRoutes.size(); setOfRoutesIndex++){
-			
-			for(int fractionsIndex = 0; fractionsIndex < newRouteFractions.get(setOfRoutesIndex).size(); fractionsIndex++ ){
-				
-				//temp fractions
-				Double[] tempFractions = new Double[newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex).length];
-				
-				 if(fractionsIndex < oldRouteFractions.get(setOfRoutesIndex).size()){
-				
-					for(int fracIndex = 0; fracIndex < newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex).length; fracIndex++ ){
-						
-						//msa as oldRouteFrac + 1/k of the difference between new routefracs and old ones
-						tempFractions[fracIndex] = oldRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] 
-								+ (1/correctiveFactor)*(newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] 
-										-oldRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex]);
-						
-					}
-					
-					//update old fractions
-					oldRouteFractions.get(setOfRoutesIndex).set(fractionsIndex, tempFractions);
-				}
-				else{
-					
-					for(int fracIndex = 0; fracIndex < newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex).length; fracIndex++ ){
-						
-						//msa for 0 old route fractions
-						tempFractions[fracIndex] =  (1/correctiveFactor)*newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex];
-						
-					}
-					
-					//update old fractions
-					oldRouteFractions.get(setOfRoutesIndex).add(tempFractions);
-				}
-				
-			}
-		}
-		//save newRoutes as oldRoutes
-		oldRoutes = newRoutes;
-		//old fractions have already been updated
-	}
 
 	private double calculateGap(ArrayList< ArrayList<PathRepresentation>> oldRoutes,
 			ArrayList< ArrayList<Double[]>> oldRouteFractions,
@@ -297,10 +261,10 @@ public class TrafficSimulator {
 			for(int routeIndex = 0; routeIndex< oldRoutes.get(setOfRoutesIndex).size(); routeIndex++){
 				
 				
+				
 				System.out.println(Arrays.toString(newRouteFractions.get(setOfRoutesIndex).get(routeIndex)));
 				System.out.println(Arrays.toString(oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)));
-				System.out.println("indeed...");
-			
+	
 				
 				PathRepresentation path = oldRoutes.get(setOfRoutesIndex).get(routeIndex);
 				int startNodeIndex = path.nodeIndexes[0];
@@ -318,7 +282,6 @@ public class TrafficSimulator {
 						}
 						//compute complete routeTT (route cost or travel time)
 						routeTT = routeTT + TravelTimeManager.computeTravelTimeForGivenCost(cost,timeClick*tStep + routeTT, tEnd, tStep);
-						System.out.println("routeTT in trafficsim -gap "  +routeTT);
 						
 						
 						}
@@ -330,10 +293,6 @@ public class TrafficSimulator {
 						
 						//update gap given the previous gap cumulative and the route cost given an OD flow for this route
 						gap = gap + oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick]* routeTT*expandedODMatrices.get(timeClick)[startNodeIndex][endNodeIndex];
-						System.out.println("update YES" + gap);
-						if(oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick]!=0){
-							System.out.println("ROUTE FRAC NOT 0");
-						}
 						
 					}
 				}
@@ -545,6 +504,7 @@ public class TrafficSimulator {
 				for(int setOfRoutesIndex = 0; setOfRoutesIndex < pathFinder.getRoutes().size(); setOfRoutesIndex++){
 
 					//extract set of routes 
+					
 					ArrayList<PathRepresentation> setOfRoutes = pathFinder.getRoutes().get(setOfRoutesIndex);
 
 					//visit each route in the set of routes

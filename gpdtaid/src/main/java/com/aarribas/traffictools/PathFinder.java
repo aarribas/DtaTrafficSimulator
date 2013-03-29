@@ -84,6 +84,16 @@ public abstract class PathFinder {
 
 		return clonedRouteFractions;
 	}
+	
+	public void setRoutes(ArrayList<ArrayList<PathRepresentation>> routes){
+		this.routes = routes;
+		
+	}
+	
+	public void setRouteFractions(ArrayList<ArrayList<Double[]>> routeFractions){
+		this.routeFractions = routeFractions;
+		
+	}
 
 
 }

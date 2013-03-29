@@ -36,8 +36,8 @@ public class LTM implements TrafficNetworkModel {
 			//initialise link to 0 for all links  and timesteps
 			link.downStreamCumulative = new double[(int)(tEnd/tStep)];
 			link.upStreamCumulative = new double[(int)(tEnd/tStep)];
-			Arrays.fill(link.downStreamCumulative, 0);
-			Arrays.fill(link.upStreamCumulative, 0);
+			Arrays.fill(link.downStreamCumulative, 0.0);
+			Arrays.fill(link.upStreamCumulative, 0.0);
 
 			
 
@@ -74,6 +74,8 @@ public class LTM implements TrafficNetworkModel {
 	}
 
 	private void updateLinkCumulativeMaximas(int timeClick){
+		
+		//TODO: REMOVE THIS IN THE FUTURE
 
 		for(TrafficLink link: tfData.links){
 
@@ -98,6 +100,7 @@ public class LTM implements TrafficNetworkModel {
 		
 		//initialise the cumulative maximas
 		initLinkCumulativeMaximas();
+		
 
 		for(int timeClick = 0; timeClick< (int)(tEnd/tStep); timeClick++){
 		
@@ -142,6 +145,7 @@ public class LTM implements TrafficNetworkModel {
 							Pair<double[],double[]> PairOfCumulatives = updateCumulativesforNode(nodeIndex, timeClick, turningFractions.get(nodeIndex).get(timeClick));
 							//set downstreamcumulative
 							for(int i = 0; i<node.incomingLinks.size(); i++){
+								
 								node.incomingLinks.get(i).downStreamCumulative[timeClick] = PairOfCumulatives.b[i];
 							}
 
@@ -160,7 +164,8 @@ public class LTM implements TrafficNetworkModel {
 				
 			}
 
-
+			
+			//TODO REMOVE THIS
 			//update cumulative maximas.
 			//maximas can be used in the logic or for debugging purposes 
 			//at the moment they are not used in the logic
