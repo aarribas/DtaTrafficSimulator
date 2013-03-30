@@ -15,8 +15,15 @@ public class DynamicDijkstra extends PathFinder {
 	}
 
 	@Override
-	public void findPath(ArrayList<double[]> travelCosts){
+	public void findPath(ArrayList<double[]> travelCosts
+			, ArrayList<ArrayList<PathRepresentation>> oldRoutes 
+			, ArrayList<ArrayList<Double[]>> oldRouteFractions){
+		//save input data 
 		this.travelCosts = travelCosts;
+		
+		//initialise the new routes and routeFractions
+		this.routes = cloneRoutes(oldRoutes);
+		this.routeFractions = cloneRouteFractions(oldRouteFractions);
 		
 		if(routes.isEmpty()){
 

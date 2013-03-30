@@ -46,11 +46,14 @@ public class TrafficSimulator {
 		computeODPairs();
 		computeInitialTravelTimes();
 		computeInitialSpeeds();
+		
+		ArrayList< ArrayList<PathRepresentation>> oldRoutes = new ArrayList<ArrayList<PathRepresentation>>();
+		ArrayList<ArrayList<Double[]>> oldRouteFractions = new ArrayList<ArrayList<Double[]>>();
 
 		pathFinder = new DynamicDijkstra(tfData, ODPairs, tEnd, tStep, 0, 100);
-		pathFinder.findPath(linkTravelTimes);
+		pathFinder.findPath(linkTravelTimes, oldRoutes, oldRouteFractions);
 
-		computeTurningFractions(100, 0, linkSpeeds);
+		computeTurningFractions(100, 0, linkSpeeds, oldRoutes, oldRouteFractions);
 
 
 		//		//code to quick - debug computeTurningFractions
@@ -125,9 +128,12 @@ public class TrafficSimulator {
 		computeInitialSpeeds();
 		computeInitialTravelTimes();
 	
+		oldRoutes = new ArrayList<ArrayList<PathRepresentation>>();
+		oldRouteFractions = new ArrayList<ArrayList<Double[]>>();
+		
 		//compute initial paths
 		pathFinder = new DynamicDijkstra(tfData, ODPairs, tEnd, tStep, 0, 50);
-		pathFinder.findPath(linkTravelTimes);
+		pathFinder.findPath(linkTravelTimes, oldRoutes, oldRouteFractions);
 		
 		//save first routes and routefractions
 		oldRoutes = pathFinder.getRoutes();
@@ -145,7 +151,7 @@ public class TrafficSimulator {
 			
 			System.out.println("it: " + iteration);
 			//calculateTurningFRactions
-			computeTurningFractions(50, 0, linkSpeedsAtArrival);
+			computeTurningFractions(50, 0, linkSpeedsAtArrival, oldRoutes, oldRouteFractions);
 //	
 //					//code to quick - debug computeTurningFractions
 //					int index = 0;
@@ -186,13 +192,14 @@ public class TrafficSimulator {
 			
 
 			int  i = 0;
-//			for(TrafficLink link : tfData.links){
-//				System.out.println("link " + i);
-//				System.out.println("down max " + link.downStreamCumulativeMax);
-//				System.out.println("up max " + link.upStreamCumulativeMax);
-//				i++;
-//			}
-//			
+			for(TrafficLink link : tfData.links){
+				System.out.println("link " + i);
+				System.out.println("down max " + link.downStreamCumulativeMax);
+				System.out.println("up max " + link.upStreamCumulativeMax);
+				i++;
+			}
+			Scanner scan  = new Scanner(System.in);
+			scan.nextLine();
 
 			//compute link speeds and link speeds at arrival
 			updateSpeeds();
@@ -203,12 +210,11 @@ public class TrafficSimulator {
 //			
 //			for(int i=0; i< linkTravelTimes.size(); i++){
 //				System.out.println(Arrays.toString(linkTravelTimes.get(i)));
-//				Scanner scan  = new Scanner(System.in);
-//				scan.nextLine();
+
 //			}
 
 			//calculate new routes and routeFractions using dijkstra
-			pathFinder.findPath(linkTravelTimes);
+			pathFinder.findPath(linkTravelTimes, oldRoutes, oldRouteFractions);
 			newRoutes = pathFinder.getRoutes();
 			newRouteFractions = pathFinder.getRouteFractions();
 
@@ -218,9 +224,6 @@ public class TrafficSimulator {
 			
 
 			System.out.println("GAP:" + gap);
-			
-
-			Scanner scan = new Scanner(System.in);
 			scan.nextLine();
 			
 			
@@ -228,20 +231,16 @@ public class TrafficSimulator {
 			msa.setup(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions, iteration);
 			msa.run();
 			
-			//save the routes and routeFractions prior to new iteration
+			//save the routes and routeFractions as computed by the swapping heuristic prior to new iteration
 			oldRoutes = msa.getRoutes();
 			oldRouteFractions = msa.getRouteFractions();
-			
-			pathFinder.setRoutes(oldRoutes);
-			pathFinder.setRouteFractions(oldRouteFractions);
-
 			
 			//move on to next iteration
 			
 		}
 
 		//recalculate turningFractions for final iteration
-		computeTurningFractions(50, 0, linkSpeedsAtArrival);
+		computeTurningFractions(50, 0, linkSpeedsAtArrival,oldRoutes, oldRouteFractions);
 
 		//obtain final link data using LTM
 		ltm.run(turningFractions);
@@ -452,7 +451,11 @@ public class TrafficSimulator {
 
 	}
 
-	private void computeTurningFractions(int timeClicksOFTurningFractionsInterval, int timeClicksShift, ArrayList<double[]> currentLinkSpeeds){
+	private void computeTurningFractions(int timeClicksOFTurningFractionsInterval, 
+			int timeClicksShift, 
+			ArrayList<double[]> currentLinkSpeeds,
+			ArrayList< ArrayList<PathRepresentation>> oldRoutes,
+			ArrayList<ArrayList<Double[]>> oldRouteFractions){
 
 		//prepare the turningFractions structure of size nodes x time steps
 		turningFractions= new ArrayList<ArrayList<double[][]>>();
@@ -501,11 +504,11 @@ public class TrafficSimulator {
 				}
 
 
-				for(int setOfRoutesIndex = 0; setOfRoutesIndex < pathFinder.getRoutes().size(); setOfRoutesIndex++){
+				for(int setOfRoutesIndex = 0; setOfRoutesIndex < oldRoutes.size(); setOfRoutesIndex++){
 
 					//extract set of routes 
 					
-					ArrayList<PathRepresentation> setOfRoutes = pathFinder.getRoutes().get(setOfRoutesIndex);
+					ArrayList<PathRepresentation> setOfRoutes = oldRoutes.get(setOfRoutesIndex);
 
 					//visit each route in the set of routes
 					for(int routeIndex = 0; routeIndex < setOfRoutes.size(); routeIndex++){
@@ -516,7 +519,7 @@ public class TrafficSimulator {
 						int indexNodeInRoute = -1;
 						indexNodeInRoute = route.findIndexInPathOfNodeIndex(nodeIndex);
 
-						if(indexNodeInRoute == -1 || pathFinder.getRouteFractions().get(setOfRoutesIndex).get(routeIndex)[timeClick] == 0 || route.isBorderNode(nodeIndex)){
+						if(indexNodeInRoute == -1 || oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick] == 0 || route.isBorderNode(nodeIndex)){
 
 							//nothing							
 						}
@@ -560,7 +563,7 @@ public class TrafficSimulator {
 
 								turningFractions.get(nodeIndex).get(timeClick)[incomingLinkPathIndex][outgoingLinkPathIndex] 
 										= turningFractions.get(nodeIndex).get(timeClick)[incomingLinkPathIndex][outgoingLinkPathIndex]
-												+ pathFinder.getRouteFractions().get(setOfRoutesIndex).get(routeIndex)[timeClick]
+												+ oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick]
 														* expandedODMatrices.get(timeClickStartODFlow)[ODPairs[setOfRoutesIndex].getIndexStartNode(tfData.nodes)][ODPairs[setOfRoutesIndex].getIndexEndNode(tfData.nodes)];
 
 							}
