@@ -112,7 +112,7 @@ public class TrafficSimulator {
 		System.out.println("SUCCESFUL END OF LTM");
 	}
 
-	public void runDTA(int maxIterations){
+	public void runDTA(int maxIterations, TrafficSwappingHeuristic heuristic){
 
 		//init DTA
 		int iteration = 1;
@@ -142,9 +142,6 @@ public class TrafficSimulator {
 		//setup the ltm (note that only the updated turningFractions are passed to run)
 		LTM ltm = new LTM(expandedODMatrices, tfData, tEnd, tStep);
 		
-		//create a swapping heuristic
-		TrafficSwappingHeuristicMSA  msa = new TrafficSwappingHeuristicMSA();
-
 		//main loop
 		while(iteration<maxIterations){
 			iteration++; //imitation of matlab code
@@ -228,12 +225,12 @@ public class TrafficSimulator {
 			
 			
 			//compute routeFractions for next iteration by means of the path swapping heuristic
-			msa.setup(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions, iteration);
-			msa.run();
+			heuristic.setup(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions, iteration);
+			heuristic.run();
 			
 			//save the routes and routeFractions as computed by the swapping heuristic prior to new iteration
-			oldRoutes = msa.getRoutes();
-			oldRouteFractions = msa.getRouteFractions();
+			oldRoutes = heuristic.getRoutes();
+			oldRouteFractions = heuristic.getRouteFractions();
 			
 			//move on to next iteration
 			

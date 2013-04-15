@@ -1,4 +1,6 @@
 import com.aarribas.dtasim.TrafficSimulator;
+import com.aarribas.dtasim.TrafficSwappingHeuristic;
+import com.aarribas.dtasim.TrafficSwappingHeuristicMSA;
 
 public class Main {
 
@@ -9,7 +11,9 @@ public class Main {
 
 		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/toy_par.mat", 3, 0.004);
 		//sim.runDNLOnly();
-		sim.runDTA(30);
+		//create a swapping heuristic
+		TrafficSwappingHeuristic  msa = new TrafficSwappingHeuristicMSA();
+		sim.runDTA(30, msa);
 	}
 
 }

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import com.aarribas.traffictools.PathRepresentation;
 
-public class TrafficSwappingHeuristicMSA extends TrafficSwappingHeuristic{
+public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 
 	private ArrayList< ArrayList<PathRepresentation>> newRoutes;
 	private ArrayList< ArrayList<Double[]>> newRouteFractions;
@@ -78,4 +78,6 @@ public class TrafficSwappingHeuristicMSA extends TrafficSwappingHeuristic{
 		
 
 	}
+	
+
 }
