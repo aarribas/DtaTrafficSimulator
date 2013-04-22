@@ -1,6 +1,7 @@
 package com.aarribas.dtasim;
 
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import com.aarribas.traffictools.PathRepresentation;
 
@@ -13,6 +14,7 @@ public class TrafficSwappingHeuristicMSA extends TrafficSwappingHeuristic{
 	private ArrayList< ArrayList<Double[]>> oldRouteFractions;
 
 	private double iteration;
+	
 
 	public void setup(ArrayList< ArrayList<PathRepresentation>> oldRoutes,
 			ArrayList< ArrayList<Double[]>> oldRouteFractions,
@@ -58,7 +60,6 @@ public class TrafficSwappingHeuristicMSA extends TrafficSwappingHeuristic{
 
 					for(int fracIndex = 0; fracIndex < newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex).length; fracIndex++ ){
 
-						//msa for 0 old route fractions
 						tempFractions[fracIndex] =  (1/iteration)*newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex];
 
 					}

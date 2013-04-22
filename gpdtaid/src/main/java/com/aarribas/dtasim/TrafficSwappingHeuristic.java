@@ -9,6 +9,19 @@ public abstract class TrafficSwappingHeuristic {
 	protected ArrayList< ArrayList<PathRepresentation>> finalRoutes;
 	protected ArrayList< ArrayList<Double[]>> finalRouteFractions;
 	
+	protected double tEnd, tStep;
+	protected TrafficData tfData;
+	protected ArrayList<double[]> linkSpeeds;
+	
+	public void oneTimeSetup(double tEnd, double tStep, TrafficData tfData, ArrayList<double[]> linkSpeeds){
+		
+		this.tEnd = tEnd;
+		this.tStep = tStep;
+		this.tfData = tfData;
+		this.linkSpeeds = linkSpeeds;
+		
+	}
+	
 	abstract public void setup(ArrayList< ArrayList<PathRepresentation>> oldRoutes,
 			ArrayList< ArrayList<Double[]>> oldRouteFractions,
 			ArrayList< ArrayList<PathRepresentation>> newRoutes,

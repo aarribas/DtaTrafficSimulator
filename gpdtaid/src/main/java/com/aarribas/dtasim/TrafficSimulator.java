@@ -17,6 +17,13 @@ import com.aarribas.traffictools.PathFinder;
 import com.aarribas.traffictools.PathRepresentation;
 import com.aarribas.traffictools.TravelTimeManager;
 
+/**
+ * TrafficSimulator encapsulates the logic and the methods to load a network and the OD flows from a .mat, and to 
+ * run a either a simple DNL simulation or a complete DTA.
+ * 
+ * @author andresaan
+ *
+ */
 public class TrafficSimulator {
 
 	private ArrayList<double[][]> expandedODMatrices = new ArrayList<double[][]>();
@@ -29,6 +36,8 @@ public class TrafficSimulator {
 	private ArrayList<double[]> linkSpeedsAtArrival = new ArrayList<double[]>();
 	private ArrayList<ArrayList<double[][]>> turningFractions = new ArrayList<ArrayList<double[][]>>();
 	private PathFinder pathFinder;
+	private double gap;
+	private int iteration;
 
 	public TrafficSimulator(String fileName, double tEnd, double tStep){
 		this.tEnd = tEnd;
@@ -115,7 +124,7 @@ public class TrafficSimulator {
 	public void runDTA(int maxIterations, TrafficSwappingHeuristic heuristic){
 
 		//init DTA
-		int iteration = 1;
+		iteration = 1;
 		//define routes and routeFractions to be used
 		ArrayList< ArrayList<PathRepresentation>> oldRoutes;
 		ArrayList<ArrayList<Double[]>> oldRouteFractions;
@@ -141,6 +150,9 @@ public class TrafficSimulator {
 
 		//setup the ltm (note that only the updated turningFractions are passed to run)
 		LTM ltm = new LTM(expandedODMatrices, tfData, tEnd, tStep);
+		
+		//save references to some basic info at heuristic level
+		heuristic.oneTimeSetup(tEnd, tStep, tfData, linkSpeeds);
 		
 		//main loop
 		while(iteration<maxIterations){
@@ -187,16 +199,16 @@ public class TrafficSimulator {
 			//update link data calling the LTM
 			ltm.run(turningFractions);
 			
-
-			int  i = 0;
-			for(TrafficLink link : tfData.links){
-				System.out.println("link " + i);
-				System.out.println("down max " + link.downStreamCumulativeMax);
-				System.out.println("up max " + link.upStreamCumulativeMax);
-				i++;
-			}
-			Scanner scan  = new Scanner(System.in);
-			scan.nextLine();
+//
+//			int  i = 0;
+//			for(TrafficLink link : tfData.links){
+//				System.out.println("link " + i);
+//				System.out.println("down max " + link.downStreamCumulativeMax);
+//				System.out.println("up max " + link.upStreamCumulativeMax);
+//				i++;
+//			}
+//			Scanner scan  = new Scanner(System.in);
+//			scan.nextLine();
 
 			//compute link speeds and link speeds at arrival
 			updateSpeeds();
@@ -217,20 +229,33 @@ public class TrafficSimulator {
 
 
 			//recalculate the gap
-			double gap = calculateGap(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions);
+			setGap(calculateGap(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions));
 			
+			
+			if(checkForConvergence()){
+				return;
+			}
 
-			System.out.println("GAP:" + gap);
-			scan.nextLine();
+//			System.out.println("GAP:" + gap);
+//			scan.nextLine();
 			
 			
 			//compute routeFractions for next iteration by means of the path swapping heuristic
 			heuristic.setup(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions, iteration);
 			heuristic.run();
 			
-			//save the routes and routeFractions as computed by the swapping heuristic prior to new iteration
-			oldRoutes = heuristic.getRoutes();
-			oldRouteFractions = heuristic.getRouteFractions();
+		
+			
+			if(heuristic.getRoutes() == null || heuristic.getRouteFractions() == null){
+				
+				//if the heuristic routes/routeFractions are null, the heuristic is telling us to stop
+				return;
+			}
+			else{
+				//otherwise save the routes and routeFractions as computed by the swapping heuristic prior to new iteration
+				oldRoutes = heuristic.getRoutes();
+				oldRouteFractions = heuristic.getRouteFractions();
+			}
 			
 			//move on to next iteration
 			
@@ -241,9 +266,19 @@ public class TrafficSimulator {
 
 		//obtain final link data using LTM
 		ltm.run(turningFractions);
+		
+		return;
 
 	}
 	
+	private boolean checkForConvergence(){
+		if(gap < 2){ //TO DOUBLE CHECK
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
 
 	private double calculateGap(ArrayList< ArrayList<PathRepresentation>> oldRoutes,
 			ArrayList< ArrayList<Double[]>> oldRouteFractions,
@@ -255,12 +290,7 @@ public class TrafficSimulator {
 		
 		for(int setOfRoutesIndex = 0; setOfRoutesIndex< oldRoutes.size(); setOfRoutesIndex++){
 			for(int routeIndex = 0; routeIndex< oldRoutes.get(setOfRoutesIndex).size(); routeIndex++){
-				
-				
-				
-				System.out.println(Arrays.toString(newRouteFractions.get(setOfRoutesIndex).get(routeIndex)));
-				System.out.println(Arrays.toString(oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)));
-	
+		
 				
 				PathRepresentation path = oldRoutes.get(setOfRoutesIndex).get(routeIndex);
 				int startNodeIndex = path.nodeIndexes[0];
@@ -656,6 +686,19 @@ public class TrafficSimulator {
 			outgoingLinkIndexes.get(startNodeId).add(linkIndex);
 			incomingLinkIndexes.get(endNodeId).add(linkIndex);
 		}
+	}
+
+	public double getGap() {
+		return gap;
+	}
+
+	public void setGap(double gap) {
+		this.gap = gap;
+	}
+	
+
+	public int getIteration() {
+		return iteration;
 	}
 
 }

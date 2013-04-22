@@ -13,7 +13,7 @@ public class Main {
 		//sim.runDNLOnly();
 		//create a swapping heuristic
 		TrafficSwappingHeuristic  msa = new TrafficSwappingHeuristicMSA();
-		sim.runDTA(30, msa);
+		sim.runDTA(30000, msa);
 	}
 
 }
