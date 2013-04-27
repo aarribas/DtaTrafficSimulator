@@ -266,13 +266,12 @@ public class TrafficSimulator {
 
 		//obtain final link data using LTM
 		ltm.run(turningFractions);
-		
-		return;
+	
 
 	}
 	
 	private boolean checkForConvergence(){
-		if(gap < 2){ //TO DOUBLE CHECK
+		if(gap < 5){ //TO DOUBLE CHECK
 			return true;
 		}
 		else{
