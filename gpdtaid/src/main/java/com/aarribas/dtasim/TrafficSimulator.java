@@ -122,7 +122,8 @@ public class TrafficSimulator {
 	}
 
 	public void runDTA(int maxIterations, TrafficSwappingHeuristic heuristic){
-
+		
+		System.out.println("->NEW DTA BEGINS");
 		//init DTA
 		iteration = 1;
 		//define routes and routeFractions to be used
@@ -156,7 +157,7 @@ public class TrafficSimulator {
 		
 		//main loop
 		while(iteration<maxIterations){
-			iteration++; //imitation of matlab code
+			iteration++; //imitation of MATLAB code
 			
 			System.out.println("it: " + iteration);
 			//calculateTurningFRactions
@@ -230,15 +231,11 @@ public class TrafficSimulator {
 
 			//recalculate the gap
 			setGap(calculateGap(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions));
-			
+			//System.out.println("GAP:" + gap);
 			
 			if(checkForConvergence()){
 				return;
 			}
-
-//			System.out.println("GAP:" + gap);
-//			scan.nextLine();
-			
 			
 			//compute routeFractions for next iteration by means of the path swapping heuristic
 			heuristic.setup(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions, iteration);
@@ -249,6 +246,7 @@ public class TrafficSimulator {
 			if(heuristic.getRoutes() == null || heuristic.getRouteFractions() == null){
 				
 				//if the heuristic routes/routeFractions are null, the heuristic is telling us to stop
+				System.out.println("->ABORTED");
 				return;
 			}
 			else{
@@ -271,7 +269,8 @@ public class TrafficSimulator {
 	}
 	
 	private boolean checkForConvergence(){
-		if(gap < 5){ //TO DOUBLE CHECK
+		if(gap == 0){
+			System.out.println("->CONVERGED");
 			return true;
 		}
 		else{
@@ -310,6 +309,7 @@ public class TrafficSimulator {
 						
 						
 						}
+
 					if(newRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick] == 1.0){
 						//nothing
 					}
@@ -544,7 +544,7 @@ public class TrafficSimulator {
 						//obtain the index in the route of the nodeIndex
 						int indexNodeInRoute = -1;
 						indexNodeInRoute = route.findIndexInPathOfNodeIndex(nodeIndex);
-
+						
 						if(indexNodeInRoute == -1 || oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick] == 0 || route.isBorderNode(nodeIndex)){
 
 							//nothing							

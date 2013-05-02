@@ -117,8 +117,7 @@ public class DynamicDijkstra extends PathFinder {
 						tempPathRepresentation.toString();
 						//compare to each route for that odpair
 						for(int routeIndex = 0; routeIndex < routes.get(odIndex).size(); routeIndex++){
-							System.out.println(tempPathRepresentation.toString());
-							System.out.println(routes.get(odIndex).get(routeIndex).toString());
+							
 							
 							if(tempPathRepresentation.equals(routes.get(odIndex).get(routeIndex))){
 								routeAlreadyFound = true;
