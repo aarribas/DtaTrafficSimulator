@@ -231,7 +231,9 @@ public class TrafficSimulator {
 
 			//recalculate the gap
 			setGap(calculateGap(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions));
-			//System.out.println("GAP:" + gap);
+			System.out.println("GAP:" + gap);
+//			Scanner scan = new Scanner(System.in);
+//			scan.nextLine();
 			
 			if(checkForConvergence()){
 				return;

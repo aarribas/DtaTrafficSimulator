@@ -5,6 +5,7 @@ import java.util.Calendar;
 import com.aarribas.dtasim.TrafficSimulator;
 import com.aarribas.dtasim.TrafficSwappingHeuristic;
 import com.aarribas.dtasim.TrafficSwappingHeuristicMSA;
+import com.aarribas.dtasim.TrafficSwappingHeuristicDEC;
 
 public class Main {
 
@@ -16,8 +17,8 @@ public class Main {
 		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/toy_par.mat", 3, 0.004);
 		//sim.runDNLOnly();
 		//create a swapping heuristic
-		TrafficSwappingHeuristic  msa = new TrafficSwappingHeuristicMSA();
-		sim.runDTA(30000000, msa);
+		TrafficSwappingHeuristic  msa = new TrafficSwappingHeuristicDEC();
+		sim.runDTA(300000, msa);
 		System.out.println(sim.getIteration());
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		Calendar cal = Calendar.getInstance();

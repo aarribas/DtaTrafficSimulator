@@ -80,22 +80,20 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 
 					
 							double delta= 0.0;
-//							if(cumulativeOfDeltas == null || setOfRoutesIndex >= cumulativeOfDeltas.size()){
-//
-//								delta = task.getTaskData().compute(new EvoDTAContext(rtFrac,
-//										minDemandPerOD.get(setOfRoutesIndex)[fracIndex], 1.0/(double)iteration,  normCostDiff, 0.0));
-//							}
-//							else{
-//								if(fractionsIndex >= cumulativeOfDeltas.get(setOfRoutesIndex).size()){
-//									delta = task.getTaskData().compute(new EvoDTAContext(rtFrac,
-//											minDemandPerOD.get(setOfRoutesIndex)[fracIndex], 1.0/(double)iteration,  normCostDiff, 0.0));
-//								}
-//								else{
-//
-//									delta = task.getTaskData().compute(new EvoDTAContext(rtFrac,
-//											minDemandPerOD.get(setOfRoutesIndex)[fracIndex], 1.0/(double)iteration,  normCostDiff, cumulativeOfDeltas.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex]));
-//								}
-//							}
+							if(cumulativeOfDeltas == null || setOfRoutesIndex >= cumulativeOfDeltas.size()){
+
+								delta = normCostDiff;
+							}
+							else{
+								if(fractionsIndex >= cumulativeOfDeltas.get(setOfRoutesIndex).size()){
+									delta = normCostDiff;
+								}
+								else{
+
+									delta = normCostDiff + cumulativeOfDeltas.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex];
+									}
+							}
+							
 							
 							
 							
@@ -109,12 +107,14 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 								delta = rtFrac;
 							}
 							
+							//to be compliant with the DEC article
+							delta = -delta/2;
 
 							//add current delta to the cumulative of deltas
 							saveDeltaForARouteAndTime(setOfRoutesIndex, fractionsIndex, fracIndex, delta);
 
 							//save the new route fraction
-							tempFractions[fracIndex] = rtFrac - delta;
+							tempFractions[fracIndex] = rtFrac + delta;
 
 							//update the cumulativeOfRouteFractions
 							cumulativeOfRouteFractions[fracIndex] = cumulativeOfRouteFractions[fracIndex] + tempFractions[fracIndex];
@@ -134,6 +134,7 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 						//save the new route fraction
 						if(newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] ==0){
 							tempFractions[fracIndex] = 0.0;
+							saveDeltaForARouteAndTime(setOfRoutesIndex, fractionsIndex, fracIndex, 0.0);
 						}
 					}
 				}
@@ -150,8 +151,10 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 
 					//compute correction only if the route fraction is optimal
 					if(newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] == 1){
-
-						fractionsForOD.get(fractionsIndex)[fracIndex] = (1.0 - cumulativeOfRouteFractions[fracIndex]) / (double)(numOptimalRtsPerOD.get(setOfRoutesIndex)[fracIndex]);
+						
+						double delta =  cumulativeOfRouteFractions[fracIndex] / (double)(numOptimalRtsPerOD.get(setOfRoutesIndex)[fracIndex]);
+						fractionsForOD.get(fractionsIndex)[fracIndex] = 1.0 - delta;
+						saveDeltaForARouteAndTime(setOfRoutesIndex, fractionsIndex, fracIndex, delta);
 					}
 				}
 
@@ -168,14 +171,14 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 		finalRoutes = cloneRoutes(newRoutes);
 		finalRouteFractions = tempRouteFractions;
 		
-		for(int setOfRoutesIndex = 0; setOfRoutesIndex< newRoutes.size(); setOfRoutesIndex++){
-			for(int fractionsIndex = 0; fractionsIndex < tempRouteFractions.get(setOfRoutesIndex).size(); fractionsIndex++ ){
-				System.out.println("OD " + setOfRoutesIndex + " route " + fractionsIndex);
-				System.out.println(Arrays.toString(tempRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)));
-				Scanner scan = new  Scanner(System.in);
-				scan.nextLine();
-			}
-		}
+//		for(int setOfRoutesIndex = 0; setOfRoutesIndex< newRoutes.size(); setOfRoutesIndex++){
+//			for(int fractionsIndex = 0; fractionsIndex < tempRouteFractions.get(setOfRoutesIndex).size(); fractionsIndex++ ){
+//				System.out.println("OD " + setOfRoutesIndex + " route " + fractionsIndex);
+//				System.out.println(Arrays.toString(tempRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)));
+//				Scanner scan = new  Scanner(System.in);
+//				scan.nextLine();
+//			}
+//		}
 
 	}
 
