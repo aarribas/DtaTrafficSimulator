@@ -17,13 +17,19 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 
 	private double iteration;
 
+	private double propFactor;
+
 	//some structures required to pass complex parameters to the GP Context
 	private  ArrayList<ArrayList<double[]>> costPerRoute;
 	private  ArrayList<ArrayList<double[]>> cumulativeOfDeltas;
-	private  ArrayList<int[]> numOptimalRtsPerOD;
-	private  ArrayList<int[]> indexOptimalRtPerOD;
-	private  ArrayList<double[]> minDemandPerOD;
-	
+	private  ArrayList<int[]>  numRtsWithMinCostPerOD;
+	private  ArrayList<double[]> minCostPerOD;
+
+	public TrafficSwappingHeuristicDEC(double alpha){
+		super();
+		this.propFactor = alpha;
+	}
+
 
 	public void setup(ArrayList< ArrayList<PathRepresentation>> oldRoutes,
 			ArrayList< ArrayList<Double[]>> oldRouteFractions,
@@ -61,24 +67,32 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 				//temp fractions
 				Double[] tempFractions = new Double[newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex).length];
 
-				
+
 				if(fractionsIndex < oldRouteFractions.get(setOfRoutesIndex).size()){
-					
+
 					//the following applies to routes already seen 
 					for(int fracIndex = 0; fracIndex < newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex).length; fracIndex++ ){
 
-						//compute correction only if the route fraction is not optimal (newRoutefrac = 1 indicates it is optimal)
-						if(newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] != 1){
-							
+						//compute correction only if the cost is not minimal for this route and instant
+						if(costPerRoute.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] != minCostPerOD.get(setOfRoutesIndex)[fracIndex]){
+
 							double rtFrac = oldRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex];
 
 							//compute the cost difference between this route and the optimal route
 							double normCostDiff = costPerRoute.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] - 
-									costPerRoute.get(setOfRoutesIndex).get(indexOptimalRtPerOD.get(setOfRoutesIndex)[fracIndex])[fracIndex];
-							//normalise
-							normCostDiff = normCostDiff / costPerRoute.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] ;
+									minCostPerOD.get(setOfRoutesIndex)[fracIndex];
 
-					
+//							if(normCostDiff < 0){
+//								System.out.println(oldRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] + " " + 
+//										newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex]);
+//								Scanner scan =new Scanner(System.in);
+//								scan.nextLine();
+//							}
+							//normalise
+							//							System.out.println(normCostDiff);
+							//							normCostDiff = normCostDiff / costPerRoute.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] ;
+							//							System.out.println(" norm:" + normCostDiff);
+
 							double delta= 0.0;
 							if(cumulativeOfDeltas == null || setOfRoutesIndex >= cumulativeOfDeltas.size()){
 
@@ -91,30 +105,59 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 								else{
 
 									delta = normCostDiff + cumulativeOfDeltas.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex];
-									}
+								}
 							}
-							
-							
-							
-							
+
+							//	System.out.println(delta + normCostDiff + cumulativeOfDeltas.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] );
+
+
 							//Limit the correction to some common sense values
-							if(delta < 0){
-								//min route swapping is 0
-								delta = 0;
+
+							if(delta < 0.0){
+//
+//								//min route swapping is 0
+//								System.out.println(delta  + "HEY" + normCostDiff + " " + (delta - normCostDiff));
+								delta = 0.0;
+//								System.out.println(delta  + "HEY");
+
+
 							}
-							else if(delta > rtFrac){
+							else if(delta > rtFrac/propFactor){
+
 								//maximum route swapping is the current traffic on that route
-								delta = rtFrac;
+								delta = rtFrac/propFactor;
+
 							}
-							
+
+//
+//							if(delta !=0){
+//								System.out.println("->" + setOfRoutesIndex + " " + fractionsIndex);
+//								System.out.println(delta + " " + fracIndex);
+//								System.out.println(cumulativeOfDeltas.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex]);
+//							}
+
+							//System.out.println(delta  + "HEY");
 							//to be compliant with the DEC article
-							delta = -delta/2;
+							delta = -delta;
+
+
 
 							//add current delta to the cumulative of deltas
 							saveDeltaForARouteAndTime(setOfRoutesIndex, fractionsIndex, fracIndex, delta);
 
 							//save the new route fraction
-							tempFractions[fracIndex] = rtFrac + delta;
+							tempFractions[fracIndex] = rtFrac + propFactor*delta;
+
+							//round to fix precision mistakes
+							if(tempFractions[fracIndex] < 0)
+							{
+								tempFractions[fracIndex] = 0.0;
+							}
+
+							if(tempFractions[fracIndex] > 1)
+							{
+								tempFractions[fracIndex] = 1.0;
+							}
 
 							//update the cumulativeOfRouteFractions
 							cumulativeOfRouteFractions[fracIndex] = cumulativeOfRouteFractions[fracIndex] + tempFractions[fracIndex];
@@ -123,16 +166,13 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 
 				}
 				else{
-					//NEW ROUTE!
-					//the following applies to routes already seen 
-					
-					//for new routes if the route is not optimal the "old and new" fractions are 0 
-					//there is no traffic to swap in any case.
-					//if the route is optimal it is treated in several lines below
-					
+					//COMPLETELY NEW ROUTE!
+					//for completely new routes the old fractions is 0 
+					//if the route is optimal for some instant then the new rtFraction is obtained via normalisation later on
+
 					for(int fracIndex = 0; fracIndex < newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex).length; fracIndex++ ){
 						//save the new route fraction
-						if(newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] ==0){
+						if(newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] == 0){
 							tempFractions[fracIndex] = 0.0;
 							saveDeltaForARouteAndTime(setOfRoutesIndex, fractionsIndex, fracIndex, 0.0);
 						}
@@ -143,78 +183,97 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 				fractionsForOD.add(tempFractions);
 
 			}
-			
-			//finally normalise routeFractions for optimal routes
+
+			//finally normalise routeFractions for all routes with minimum cost per instant
 			for(int fractionsIndex = 0; fractionsIndex < newRouteFractions.get(setOfRoutesIndex).size(); fractionsIndex++ ){
 
 				for(int fracIndex = 0; fracIndex < newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex).length; fracIndex++ ){
+					
+					//default rtFrac is 0, this is valid for route Fractions that are completely new
+					double rtFrac = 0.0;
 
-					//compute correction only if the route fraction is optimal
-					if(newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] == 1){
-						
-						double delta =  cumulativeOfRouteFractions[fracIndex] / (double)(numOptimalRtsPerOD.get(setOfRoutesIndex)[fracIndex]);
-						fractionsForOD.get(fractionsIndex)[fracIndex] = 1.0 - delta;
-						saveDeltaForARouteAndTime(setOfRoutesIndex, fractionsIndex, fracIndex, delta);
+					if(fractionsIndex < oldRouteFractions.get(setOfRoutesIndex).size()){
+						//otherwise we have to use an old routeFraction
+						rtFrac = oldRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex];
 					}
+
+					fractionsForOD.get(fractionsIndex)[fracIndex] = 1.0 - (cumulativeOfRouteFractions[fracIndex] / (double)(numRtsWithMinCostPerOD.get(setOfRoutesIndex)[fracIndex]));
+					//compute the corresponding delta for this route
+					double delta = (fractionsForOD.get(fractionsIndex)[fracIndex]  - rtFrac)/propFactor * (double)(numRtsWithMinCostPerOD.get(setOfRoutesIndex)[fracIndex]);
+					saveDeltaForARouteAndTime(setOfRoutesIndex, fractionsIndex, fracIndex, delta);
+
 				}
 
 			}
-			
-		
+
+
 			//save the routeFractions for this OD pair
 			tempRouteFractions.add(fractionsForOD);
-		
+
 		}
-		
+
 
 		//save finalRoutes and finalRouteFractions
 		finalRoutes = cloneRoutes(newRoutes);
 		finalRouteFractions = tempRouteFractions;
-		
-//		for(int setOfRoutesIndex = 0; setOfRoutesIndex< newRoutes.size(); setOfRoutesIndex++){
-//			for(int fractionsIndex = 0; fractionsIndex < tempRouteFractions.get(setOfRoutesIndex).size(); fractionsIndex++ ){
-//				System.out.println("OD " + setOfRoutesIndex + " route " + fractionsIndex);
-//				System.out.println(Arrays.toString(tempRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)));
-//				Scanner scan = new  Scanner(System.in);
-//				scan.nextLine();
-//			}
-//		}
+
+		//		for(int setOfRoutesIndex = 0; setOfRoutesIndex< newRoutes.size(); setOfRoutesIndex++){
+		//			for(int fractionsIndex = 0; fractionsIndex < tempRouteFractions.get(setOfRoutesIndex).size(); fractionsIndex++ ){
+		//				System.out.println("OD " + setOfRoutesIndex + " route " + fractionsIndex);
+		//				System.out.println(Arrays.toString(tempRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)));
+		//				Scanner scan = new  Scanner(System.in);
+		//				scan.nextLine();
+		//			}
+		//		}
 
 	}
 
 	private void computeNumOptimalRtsAndMinRtFrac(){
-		numOptimalRtsPerOD = new ArrayList<int[]>();
-		minDemandPerOD = new ArrayList<double[]>();
-		indexOptimalRtPerOD = new ArrayList<int[]>();
+
+		//compute min cost per OD and time
+		minCostPerOD = new ArrayList<double[]>();
+
 		for(int setOfRoutesIndex = 0; setOfRoutesIndex< newRoutes.size(); setOfRoutesIndex++){
-			int[] numberOfOptimalRoutes = new int[(int)(tEnd/tStep)];
-			double[] minDemand = new double[(int)(tEnd/tStep)];
-			int[] indexOptRt = new int[(int)(tEnd/tStep)];
-			Arrays.fill(numberOfOptimalRoutes, 0);
+			double[] minCosts = new double[(int)(tEnd/tStep)];
+			for(int fracIndex = 0; fracIndex < (int)(tEnd/tStep); fracIndex++ ){
+				double minCost = costPerRoute.get(setOfRoutesIndex).get(0)[fracIndex];
 
-			//compute for this OD pair the number of optimal routes per instant
-			for(int fractionsIndex = 0; fractionsIndex < newRouteFractions.get(setOfRoutesIndex).size(); fractionsIndex++ ){
-				for(int fracIndex = 0; fracIndex < newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex).length; fracIndex++ ){
+				for(int fractionsIndex = 0; fractionsIndex < newRouteFractions.get(setOfRoutesIndex).size(); fractionsIndex++ ){
 
-					if(newRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] == 1.0){
-
-						numberOfOptimalRoutes[fracIndex] += 1;
-						indexOptRt[fracIndex] = fractionsIndex;
-						if(oldRouteFractions.get(setOfRoutesIndex).size() > fractionsIndex){
-
-							minDemand[fracIndex] = oldRouteFractions.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex];
-						}
-						else{
-							minDemand[fracIndex] = 0.0;
-						}
-
-					}
+					//check if minimum
+					if(costPerRoute.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] < minCost )
+					{	
+						//save it
+						minCost = costPerRoute.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex];
+					}	
 				}
+				minCosts[fracIndex] = minCost; 
 
 			}
-			numOptimalRtsPerOD.add(numberOfOptimalRoutes);
-			minDemandPerOD.add(minDemand);
-			indexOptimalRtPerOD.add(indexOptRt);
+			minCostPerOD.add(minCosts);
+
+		}
+
+
+		//compute num routes with min Cost per OD and time
+		numRtsWithMinCostPerOD = new ArrayList<int[]>();
+		for(int setOfRoutesIndex = 0; setOfRoutesIndex< newRoutes.size(); setOfRoutesIndex++){
+			//initialize
+			numRtsWithMinCostPerOD.add(new int[(int)(tEnd/tStep)]);
+			Arrays.fill(numRtsWithMinCostPerOD.get(setOfRoutesIndex),0);
+
+			for(int fracIndex = 0; fracIndex < (int)(tEnd/tStep); fracIndex++ ){
+
+				for(int fractionsIndex = 0; fractionsIndex < newRouteFractions.get(setOfRoutesIndex).size(); fractionsIndex++ ){
+					//check if minimum
+					if(costPerRoute.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] == minCostPerOD.get(setOfRoutesIndex)[fracIndex] )
+					{	
+						//increase the counter if this route has min cost
+						numRtsWithMinCostPerOD.get(setOfRoutesIndex)[fracIndex] = numRtsWithMinCostPerOD.get(setOfRoutesIndex)[fracIndex] + 1;
+					}	
+				}
+			}
+
 		}
 	}
 
@@ -226,7 +285,7 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 		//for all routes compute and save the cost!
 		for(int setOfRoutesIndex = 0; setOfRoutesIndex< newRoutes.size(); setOfRoutesIndex++){
 			for(int routeIndex = 0; routeIndex< newRoutes.get(setOfRoutesIndex).size(); routeIndex++){
-				
+
 				PathRepresentation path = newRoutes.get(setOfRoutesIndex).get(routeIndex);
 
 				int[] linkIndexes = path.linkIndexes;
@@ -291,11 +350,14 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 		if(routeIndex >= cumulativeOfDeltas.get(setOfRoutesIndex).size()){
 			cumulativeOfDeltas.get(setOfRoutesIndex).add(new double[(int)(tEnd/tStep)]);
 			//no changes so far hence all to 0
-			Arrays.fill(cumulativeOfDeltas.get(setOfRoutesIndex).get(routeIndex), 0);
+			Arrays.fill(cumulativeOfDeltas.get(setOfRoutesIndex).get(routeIndex), 0.0);
 		}
 
+		//	System.out.println(cumulativeOfDeltas.get(setOfRoutesIndex).get(routeIndex)[timeClick] + " " + delta);
+
 		//add the delta to the cumulative
-		cumulativeOfDeltas.get(setOfRoutesIndex).get(routeIndex)[timeClick] = cumulativeOfDeltas.get(setOfRoutesIndex).get(routeIndex)[timeClick] + delta;		
+		cumulativeOfDeltas.get(setOfRoutesIndex).get(routeIndex)[timeClick] = cumulativeOfDeltas.get(setOfRoutesIndex).get(routeIndex)[timeClick] + delta;	
+
 
 	}
 

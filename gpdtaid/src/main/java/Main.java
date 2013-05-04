@@ -17,8 +17,8 @@ public class Main {
 		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/toy_par.mat", 3, 0.004);
 		//sim.runDNLOnly();
 		//create a swapping heuristic
-		TrafficSwappingHeuristic  msa = new TrafficSwappingHeuristicDEC();
-		sim.runDTA(300000, msa);
+		TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicDEC(201.0);
+		sim.runDTA(300000, heuristic);
 		System.out.println(sim.getIteration());
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		Calendar cal = Calendar.getInstance();
