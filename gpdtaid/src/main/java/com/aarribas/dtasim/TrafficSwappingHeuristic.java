@@ -8,17 +8,19 @@ public abstract class TrafficSwappingHeuristic {
 	
 	protected ArrayList< ArrayList<PathRepresentation>> finalRoutes;
 	protected ArrayList< ArrayList<Double[]>> finalRouteFractions;
+	protected ArrayList<double[][]> expandedODMatrices;
 	
 	protected double tEnd, tStep;
 	protected TrafficData tfData;
 	protected ArrayList<double[]> linkSpeeds;
 	
-	public void oneTimeSetup(double tEnd, double tStep, TrafficData tfData, ArrayList<double[]> linkSpeeds){
+	public void oneTimeSetup(double tEnd, double tStep, TrafficData tfData, ArrayList<double[]> linkSpeeds, ArrayList<double[][]> expandedODMatrices){
 		
 		this.tEnd = tEnd;
 		this.tStep = tStep;
 		this.tfData = tfData;
 		this.linkSpeeds = linkSpeeds;
+		this.expandedODMatrices = expandedODMatrices;
 		
 	}
 	

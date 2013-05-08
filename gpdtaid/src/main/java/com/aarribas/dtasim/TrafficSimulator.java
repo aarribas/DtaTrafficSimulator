@@ -153,7 +153,7 @@ public class TrafficSimulator {
 		LTM ltm = new LTM(expandedODMatrices, tfData, tEnd, tStep);
 		
 		//save references to some basic info at heuristic level
-		heuristic.oneTimeSetup(tEnd, tStep, tfData, linkSpeeds);
+		heuristic.oneTimeSetup(tEnd, tStep, tfData, linkSpeeds, expandedODMatrices);
 		
 		//main loop
 		while(iteration<maxIterations){
@@ -230,7 +230,7 @@ public class TrafficSimulator {
 
 
 			//recalculate the gap
-			setGap(calculateGap(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions));
+			setGap(calculateGec(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions));
 			System.out.println("GAP:" + gap);
 //			Scanner scan = new Scanner(System.in);
 //			scan.nextLine();
@@ -320,6 +320,131 @@ public class TrafficSimulator {
 						
 						//update gap given the previous gap cumulative and the route cost given an OD flow for this route
 						gap = gap + oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick]* routeTT*expandedODMatrices.get(timeClick)[startNodeIndex][endNodeIndex];
+						
+					}
+				}
+				
+			}
+		}
+			return gap;
+
+	}
+	
+
+
+	private double calculateGec(ArrayList< ArrayList<PathRepresentation>> oldRoutes,
+			ArrayList< ArrayList<Double[]>> oldRouteFractions,
+			ArrayList< ArrayList<PathRepresentation>> newRoutes,
+			ArrayList< ArrayList<Double[]>> newRouteFractions){
+		
+		
+		ArrayList<ArrayList<double[]>> costPerRoute =  new ArrayList<ArrayList<double[]>>();
+
+		//for all routes compute and save the cost!
+		for(int setOfRoutesIndex = 0; setOfRoutesIndex< newRoutes.size(); setOfRoutesIndex++){
+
+			for(int routeIndex = 0; routeIndex< newRoutes.get(setOfRoutesIndex).size(); routeIndex++){
+
+				PathRepresentation path = newRoutes.get(setOfRoutesIndex).get(routeIndex);
+
+				int[] linkIndexes = path.linkIndexes;
+
+				for(int timeClick = 0; timeClick < (int)(tEnd/tStep); timeClick++){
+					double routeTT = 0;
+					for(int linkIndex : linkIndexes){
+						double[] cost = new double[linkSpeeds.get(linkIndex).length];
+
+						//compute instantaneous cost
+						for(int costIndex = 0; costIndex < linkSpeeds.get(linkIndex).length; costIndex++ ){
+							cost[costIndex] = tfData.links.get(linkIndex).length / linkSpeeds.get(linkIndex)[costIndex];
+						}
+						//compute complete routeTT (route cost or travel time)
+						routeTT = routeTT + TravelTimeManager.computeTravelTimeForGivenCost(cost,timeClick*tStep + routeTT, tEnd, tStep);
+
+					}
+					
+					//initialisation 
+					if(costPerRoute == null){
+						costPerRoute = new  ArrayList<ArrayList<double[]>>();
+					}
+
+					//required in case of new OD pair
+					if(setOfRoutesIndex >= costPerRoute.size()){
+						costPerRoute.add(new ArrayList<double[]>());
+					}
+
+					//required in case of new route that was not considered previously
+					if(routeIndex >= costPerRoute.get(setOfRoutesIndex).size()){
+						costPerRoute.get(setOfRoutesIndex).add(new double[(int)(tEnd/tStep)]);
+					}
+
+					//save the cost (route travel time)
+					costPerRoute.get(setOfRoutesIndex).get(routeIndex)[timeClick] = routeTT;		
+				}
+
+			}
+		}
+		
+		 ArrayList<double[]> minCostPerOD = new ArrayList<double[]>();
+
+		for(int setOfRoutesIndex = 0; setOfRoutesIndex< costPerRoute.size(); setOfRoutesIndex++){
+			double[] minCosts = new double[(int)(tEnd/tStep)];
+
+			for(int fracIndex = 0; fracIndex < (int)(tEnd/tStep); fracIndex++ ){
+
+				double minCost = 10000.0;
+
+				for(int fractionsIndex = 0; fractionsIndex < costPerRoute.get(setOfRoutesIndex).size(); fractionsIndex++ ){
+
+					//check if minimum
+					if(costPerRoute.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex] < minCost )
+					{	
+						//save it
+						minCost = costPerRoute.get(setOfRoutesIndex).get(fractionsIndex)[fracIndex];
+					}	
+				}
+				minCosts[fracIndex] = minCost; 
+
+			}
+			minCostPerOD.add(minCosts);
+
+		}
+		
+		//initialise the gap at 0
+		double gap = 0;
+		
+		for(int setOfRoutesIndex = 0; setOfRoutesIndex< oldRoutes.size(); setOfRoutesIndex++){
+			for(int routeIndex = 0; routeIndex< oldRoutes.get(setOfRoutesIndex).size(); routeIndex++){
+		
+				
+				PathRepresentation path = oldRoutes.get(setOfRoutesIndex).get(routeIndex);
+				int startNodeIndex = path.nodeIndexes[0];
+				int endNodeIndex = path.nodeIndexes[path.nodeIndexes.length-1];
+				int[] linkIndexes = path.linkIndexes;
+
+				for(int timeClick = 0; timeClick < (int)(tEnd/tStep); timeClick++){
+					double routeTT = 0;
+					for(int linkIndex : linkIndexes){
+						double[] cost = new double[linkSpeeds.get(linkIndex).length];
+						
+						//compute instantaneous cost
+						for(int costIndex = 0; costIndex < linkSpeeds.get(linkIndex).length; costIndex++ ){
+							cost[costIndex] = tfData.links.get(linkIndex).length / linkSpeeds.get(linkIndex)[costIndex];
+						}
+						//compute complete routeTT (route cost or travel time)
+						routeTT = routeTT + TravelTimeManager.computeTravelTimeForGivenCost(cost,timeClick*tStep + routeTT, tEnd, tStep);
+						
+						
+						}
+
+					if(newRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick] == 1.0){
+						//nothing
+					}
+					else
+					{
+						
+						//update gap given the previous gap cumulative and the route cost given an OD flow for this route
+						gap = gap + oldRouteFractions.get(setOfRoutesIndex).get(routeIndex)[timeClick]* (routeTT - minCostPerOD.get(setOfRoutesIndex)[timeClick])*expandedODMatrices.get(timeClick)[startNodeIndex][endNodeIndex];
 						
 					}
 				}
