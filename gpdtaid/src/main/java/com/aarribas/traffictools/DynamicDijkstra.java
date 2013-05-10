@@ -160,11 +160,11 @@ public class DynamicDijkstra extends PathFinder {
 				}
 				//fix route fractions till last timeclick
 				for(int routeFractionIndex = 0; routeFractionIndex<routeFractions.get(odIndex).size(); routeFractionIndex++){
-						Arrays.fill(routeFractions.get(odIndex).get(routeFractionIndex), previousTimeClick, (int) (tEnd/tStep)-1, 0.0);
+						Arrays.fill(routeFractions.get(odIndex).get(routeFractionIndex), previousTimeClick, (int) (tEnd/tStep), 0.0);
 				}
 				
 				//set to one the routefraction of the shortest route (til last timeclick)
-				Arrays.fill(routeFractions.get(odIndex).get(shortestRouteIndex), previousTimeClick, (int) (tEnd/tStep)-1, 1.0);
+				Arrays.fill(routeFractions.get(odIndex).get(shortestRouteIndex), previousTimeClick, (int) (tEnd/tStep), 1.0);
 			}
 		}
 
