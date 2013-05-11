@@ -5,6 +5,7 @@ import java.util.Calendar;
 import com.aarribas.dtasim.TrafficSimulator;
 import com.aarribas.dtasim.TrafficSwappingHeuristic;
 import com.aarribas.dtasim.TrafficSwappingHeuristicDEC;
+import com.aarribas.dtasim.TrafficSwappingHeuristicMSA;
 
 public class Main {
 
@@ -20,6 +21,7 @@ public class Main {
 		TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicDEC(1.0); 
 //		TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicMSA(); 
 		sim.runDTA(300, heuristic);
+		sim.displayRouteFractionPerRouteInterval();
 		System.out.println(sim.getIteration());
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		Calendar cal = Calendar.getInstance();

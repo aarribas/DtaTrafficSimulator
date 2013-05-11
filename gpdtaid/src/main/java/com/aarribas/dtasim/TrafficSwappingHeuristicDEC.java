@@ -2,6 +2,7 @@ package com.aarribas.dtasim;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 
 import com.aarribas.traffictools.PathRepresentation;
@@ -20,10 +21,9 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 	private double alpha;
 
 	//some structures required to pass complex parameters to the GP Context
-	private  ArrayList<ArrayList<double[]>> costPerRoute;
+	private  ArrayList<ArrayList<HashMap<Integer,Double>>> costPerRoute;
 	private  ArrayList<ArrayList<Double>> cumulativeOfDeltas;
-	private  ArrayList<int[]>  numRtsWithMinCostPerOD;
-	private  ArrayList<double[]> minCostPerOD;
+	private  ArrayList<HashMap<Integer,Double>> minCostPerOD;
 
 
 	public TrafficSwappingHeuristicDEC(double alpha){
@@ -53,7 +53,7 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 		updateCostsPerRoute();
 
 		//compute number of optimal routes and the minimum cost -so far- per ODPair
-		computeNumMinCostAndNumRtsWithMinCost();
+		computeMinCostAndNumRtsWithMinCost();
 
 		//initiliaze the structure to save the routeFractions
 		ArrayList< ArrayList<Double[]>> tempRouteFractions = generateEmptyRouteFractions(); 
@@ -83,7 +83,7 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 
 						//compute correction only if the cost is not minimal for this route and instant
 						//						if(newRouteFractions.get(ODPairIndex).get(routeIndex)[timeClick] != 1.0){
-						if(costPerRoute.get(ODPairIndex).get(routeIndex)[timeClick] != minCostPerOD.get(ODPairIndex)[timeClick]){
+						if(newRouteFractions.get(ODPairIndex).get(routeIndex)[timeClick] != 1){
 							//get some path information 
 							PathRepresentation path = oldRoutes.get(ODPairIndex).get(routeIndex);
 							int startNodeIndex = path.nodeIndexes[0];
@@ -96,8 +96,8 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 							//compute the cost difference between this route and the optimal route
 							//							double normCostDiff = (costPerRoute.get(ODPairIndex).get(routeIndex)[timeClick] - 
 							//									costPerRoute.get(ODPairIndex).get(indexOptimalRtPerOD.get(ODPairIndex)[timeClick])[timeClick]);
-							double normCostDiff = (costPerRoute.get(ODPairIndex).get(routeIndex)[timeClick] - 
-									minCostPerOD.get(ODPairIndex)[timeClick]);
+							double normCostDiff = (costPerRoute.get(ODPairIndex).get(routeIndex).get(timeClick) - 
+									minCostPerOD.get(ODPairIndex).get(timeClick));
 							//									normCostDiff = normCostDiff*expandedODMatrices.get(timeClick)[startNodeIndex][endNodeIndex];
 
 							//=>compute delta starts here
@@ -182,8 +182,8 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 
 				//finally normalize routeFractions for all routes with minimum cost per instant
 				for(int routeIndex = 0; routeIndex < newRouteFractions.get(ODPairIndex).size(); routeIndex++ ){
+					if(newRouteFractions.get(ODPairIndex).get(routeIndex)[timeClick] == 1){
 
-					if(costPerRoute.get(ODPairIndex).get(routeIndex)[timeClick] == minCostPerOD.get(ODPairIndex)[timeClick]){
 						//default rtFrac is 0, this is valid for route Fractions that are completely new
 						double rtFrac = 0.0;
 
@@ -191,19 +191,20 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 							rtFrac = oldRouteFractions.get(ODPairIndex).get(routeIndex)[timeClick];
 						}
 
-						//compute the new routeFraction for this route - there might be several routes with min cost
-						double tempRouteFrac = (1.0 - cumulativeOfRouteFractions)/(double)numRtsWithMinCostPerOD.get(ODPairIndex)[timeClick];
-
-						Arrays.fill(tempRouteFractions.get(ODPairIndex).get(routeIndex), previousTimeClick, timeClick+1, tempRouteFrac);
 
 						//compute the corresponding delta for this route
 						PathRepresentation path = newRoutes.get(ODPairIndex).get(routeIndex);
 						int startNodeIndex = path.nodeIndexes[0];
 						int endNodeIndex = path.nodeIndexes[path.nodeIndexes.length-1];
 
-						double delta = (tempRouteFractions.get(ODPairIndex).get(routeIndex)[timeClick]  - rtFrac)/alpha ;
+
+						//compute the new routeFraction for this route - there might be several routes with min cost
+						double tempRouteFrac = (1.0 - cumulativeOfRouteFractions);
+						double delta = (tempRouteFrac  - rtFrac)/alpha ;
 						delta = delta * expandedODMatrices.get(timeClick)[startNodeIndex][endNodeIndex];
 
+
+						Arrays.fill(tempRouteFractions.get(ODPairIndex).get(routeIndex), previousTimeClick, timeClick+1, tempRouteFrac);
 						saveDeltaForARouteAndTime(ODPairIndex, routeIndex, timeClick, delta);
 					}
 
@@ -256,65 +257,40 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 
 
 
-	private void computeNumMinCostAndNumRtsWithMinCost(){
+	private void computeMinCostAndNumRtsWithMinCost(){
 
 		//compute min cost per OD and time
-		minCostPerOD = new ArrayList<double[]>();
+		minCostPerOD = new ArrayList<HashMap<Integer,Double>>();
 
 		for(int ODPairIndex = 0; ODPairIndex< costPerRoute.size(); ODPairIndex++){
-			double[] minCosts = new double[(int)(tEnd/tStep)];
+			HashMap<Integer,Double> minCosts = new HashMap<Integer,Double>();
 
-			for(int timeClick = 0; timeClick < (int)(tEnd/tStep); timeClick++ ){
+			for(int timeClick = 0; timeClick < (int)(tEnd/tStep); timeClick = timeClick + timeClicksOfRouteInterval ){
 
 				double minCost = Double.MAX_VALUE; //fake cost value
 
 				for(int routeIndex = 0; routeIndex < costPerRoute.get(ODPairIndex).size(); routeIndex++ ){
 
 					//check if minimum
-					if(costPerRoute.get(ODPairIndex).get(routeIndex)[timeClick] < minCost )
+					if(costPerRoute.get(ODPairIndex).get(routeIndex).get(timeClick) < minCost )
 					{	
 						//save it
-						minCost = costPerRoute.get(ODPairIndex).get(routeIndex)[timeClick];
+						minCost = costPerRoute.get(ODPairIndex).get(routeIndex).get(timeClick);
 					}	
 				}
-				minCosts[timeClick] = minCost; 
+				minCosts.put(timeClick, minCost); 
 
 			}
 			minCostPerOD.add(minCosts);
 		}
 
-
-
-		//compute num routes with min Cost per OD and time
-		numRtsWithMinCostPerOD = new ArrayList<int[]>();
-		for(int ODPairIndex = 0; ODPairIndex< newRoutes.size(); ODPairIndex++){
-			//initialize
-			numRtsWithMinCostPerOD.add(new int[(int)(tEnd/tStep)]);
-			Arrays.fill(numRtsWithMinCostPerOD.get(ODPairIndex),0);
-
-			for(int timeClick = 0; timeClick < (int)(tEnd/tStep); timeClick++ ){
-
-				for(int routeIndex = 0; routeIndex < newRouteFractions.get(ODPairIndex).size(); routeIndex++ ){
-
-					//check if minimum
-					if(costPerRoute.get(ODPairIndex).get(routeIndex)[timeClick] == minCostPerOD.get(ODPairIndex)[timeClick] )
-					{	
-
-						//increase the counter if this route has min cost
-						numRtsWithMinCostPerOD.get(ODPairIndex)[timeClick] = numRtsWithMinCostPerOD.get(ODPairIndex)[timeClick] + 1;
-					}	
-				}
-			}
-
-		}
 	}
 
 
 	private void updateCostsPerRoute(){
 
-		costPerRoute =  new ArrayList<ArrayList<double[]>>();
+		costPerRoute =  new ArrayList<ArrayList<HashMap<Integer,Double>>>();
 
-		//for all routes compute and save the cost!
 		for(int ODPairIndex = 0; ODPairIndex< newRoutes.size(); ODPairIndex++){
 
 			for(int routeIndex = 0; routeIndex< newRoutes.get(ODPairIndex).size(); routeIndex++){
@@ -323,7 +299,7 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 
 				int[] linkIndexes = path.linkIndexes;
 
-				for(int timeClick = 0; timeClick < (int)(tEnd/tStep); timeClick++){
+				for(int timeClick = 0; timeClick < (int)(tEnd/tStep); timeClick = timeClick + timeClicksOfRouteInterval){
 					double routeTT = 0;
 					for(int linkIndex : linkIndexes){
 						double[] cost = new double[linkSpeeds.get(linkIndex).length];
@@ -347,23 +323,24 @@ public class TrafficSwappingHeuristicDEC extends TrafficSwappingHeuristic{
 
 	private void saveCostForARouteAndTime(int ODPairIndex, int routeIndex, int timeClick, double routeTT){
 
-		//initialisation 
+		//initialization 
 		if(costPerRoute == null){
-			costPerRoute = new  ArrayList<ArrayList<double[]>>();
+			costPerRoute = new  ArrayList<ArrayList<HashMap<Integer,Double>>>();
 		}
 
 		//required in case of new OD pair
 		if(ODPairIndex >= costPerRoute.size()){
-			costPerRoute.add(new ArrayList<double[]>());
+			costPerRoute.add(new ArrayList<HashMap<Integer,Double>>());
 		}
 
 		//required in case of new route that was not considered previously
 		if(routeIndex >= costPerRoute.get(ODPairIndex).size()){
-			costPerRoute.get(ODPairIndex).add(new double[(int)(tEnd/tStep)]);
+			costPerRoute.get(ODPairIndex).add(new HashMap<Integer,Double>());
 		}
 
 		//save the cost (route travel time)
-		costPerRoute.get(ODPairIndex).get(routeIndex)[timeClick] = routeTT;		
+
+		costPerRoute.get(ODPairIndex).get(routeIndex).put(timeClick, routeTT);		
 
 	}
 
