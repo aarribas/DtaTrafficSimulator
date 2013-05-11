@@ -13,14 +13,16 @@ public abstract class TrafficSwappingHeuristic {
 	protected double tEnd, tStep;
 	protected TrafficData tfData;
 	protected ArrayList<double[]> linkSpeeds;
+	protected int timeClicksOfRouteInterval;
 	
-	public void oneTimeSetup(double tEnd, double tStep, TrafficData tfData, ArrayList<double[]> linkSpeeds, ArrayList<double[][]> expandedODMatrices){
+	public void oneTimeSetup(int timeClicksOfRouteInterval, double tEnd, double tStep, TrafficData tfData, ArrayList<double[]> linkSpeeds, ArrayList<double[][]> expandedODMatrices){
 		
 		this.tEnd = tEnd;
 		this.tStep = tStep;
 		this.tfData = tfData;
 		this.linkSpeeds = linkSpeeds;
 		this.expandedODMatrices = expandedODMatrices;
+		this.timeClicksOfRouteInterval = timeClicksOfRouteInterval;
 		
 	}
 	
