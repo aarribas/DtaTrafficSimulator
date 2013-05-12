@@ -22,7 +22,8 @@ public class Main {
 //		TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicMSA(); 
 		sim.runDTA(300, heuristic);
 		sim.displayRouteFractionPerRouteInterval();
-		System.out.println(sim.getIteration());
+		sim.displayRouteTravelTimesPerRoute();
+		System.out.println("Iterations: " +sim.getIteration());
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		Calendar cal = Calendar.getInstance();
 		System.out.println(dateFormat.format(cal.getTime()));

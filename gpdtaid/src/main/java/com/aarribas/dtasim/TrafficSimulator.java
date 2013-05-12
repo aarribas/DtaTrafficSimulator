@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Scanner;
 
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.RealMatrix;
@@ -46,12 +45,22 @@ public class TrafficSimulator {
 	private double gap;
 	private int iteration;
 	private int timeClicksOfRouteInterval;
+	private boolean silent;
+	
+	public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClicksOfRouteInterval, boolean silent){
+		
+		this(fileName, tEnd, tStep, timeClicksOfRouteInterval);
+		this.silent = silent;
+	}
 
 	public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClicksOfRouteInterval){
 		this.tEnd = tEnd;
 		this.tStep = tStep;
 		this.timeClicksOfRouteInterval = timeClicksOfRouteInterval;
-
+		
+		//by default we are not silent
+		this.silent = false;
+		
 		TrafficDataLoader loader = new TrafficDataLoader();
 		tfData = loader.load(fileName);
 
@@ -79,12 +88,11 @@ public class TrafficSimulator {
 		//		double[][] speeds = CumulativeBasedCalculator.calculateCumulativeToSpeeds(tfData.links, tEnd, tStep);
 		//		double[][] flows = CumulativeBasedCalculator.calculateCumulativeToFlows(tfData.links, SIM_FLOW_OPTION.UPSTREAM, tEnd, tStep);
 		//		double[][] density = CumulativeBasedCalculator.calculateCumulativeToDensity(tfData.links, tEnd, tStep);
-		//		System.out.println("SUCCESFUL END OF LTM");
 	}
 
 	public void runDTA(int maxIterations, TrafficSwappingHeuristic heuristic){
 
-		System.out.println("->NEW DTA BEGINS");
+		if(!silent){System.out.println("->NEW DTA BEGINS");}
 
 		iteration = 1;
 
@@ -115,7 +123,7 @@ public class TrafficSimulator {
 
 			iteration++; //as in original MATLAB code
 
-			System.out.println("it: " + iteration);
+			if(!silent){System.out.println("it: " + iteration);}
 
 			//calculateTurningFRactions
 			computeTurningFractions(timeClicksOfRouteInterval, 0, linkSpeedsAtArrival, oldRoutes, oldRouteFractions);
@@ -136,7 +144,7 @@ public class TrafficSimulator {
 
 			//recalculate the gap
 			setGap(calculateGec());
-			System.out.println("GAP:" + gap);
+			if(!silent){System.out.println("GAP:" + gap);}
 
 			if(checkForConvergence()){
 				return;
@@ -150,7 +158,7 @@ public class TrafficSimulator {
 			if(heuristic.getRoutes() == null || heuristic.getRouteFractions() == null){
 
 				//if the heuristic routes/routeFractions are null, the heuristic is telling us to stop
-				System.out.println("->ABORTED");
+				if(!silent){System.out.println("->ABORTED");}
 				return;
 			}
 			else{
@@ -169,14 +177,11 @@ public class TrafficSimulator {
 		//obtain final link data using LTM
 		ltm.run(turningFractions);
 
-
 	}
 
 	private boolean checkForConvergence(){
 		if(gap < 0.2){
-			System.out.println("->CONVERGED");
-			Scanner scan = new Scanner(System.in);
-			scan.nextLine();
+			if(!silent){System.out.println("->CONVERGED");}
 			return true;
 		}
 		else{
@@ -206,6 +211,49 @@ public class TrafficSimulator {
 			}
 		}
 }
+	
+	public void displayRouteTravelTimesPerRoute(){
+		
+
+		for(int setOfRoutesIndex = 0; setOfRoutesIndex< oldRoutes.size(); setOfRoutesIndex++){
+			System.out.println("ODPauir: " + setOfRoutesIndex);
+			for(int routeIndex = 0; routeIndex< oldRoutes.get(setOfRoutesIndex).size(); routeIndex++){
+				
+				System.out.println("routeIndex: " + routeIndex);
+
+				PathRepresentation path = oldRoutes.get(setOfRoutesIndex).get(routeIndex);
+				int startNodeIndex = path.nodeIndexes[0];
+				int endNodeIndex = path.nodeIndexes[path.nodeIndexes.length-1];
+				int[] linkIndexes = path.linkIndexes;
+				
+				System.out.println("linkIndexes: " + Arrays.toString(linkIndexes));
+
+				for(int timeClick = 0; timeClick < (int)(tEnd/tStep); timeClick+= timeClicksOfRouteInterval){
+					double routeTT = 0.0;;
+					for(int linkIndex : linkIndexes){
+						double[] cost = new double[linkSpeeds.get(linkIndex).length];
+
+						//compute instantaneous cost
+						for(int costIndex = 0; costIndex < linkSpeeds.get(linkIndex).length; costIndex++ ){
+							cost[costIndex] = tfData.links.get(linkIndex).length / linkSpeeds.get(linkIndex)[costIndex];
+						}
+						//compute complete routeTT (route cost or travel time)
+						routeTT = routeTT + TravelTimeManager.computeTravelTimeForGivenCost(cost,timeClick*tStep + routeTT, tEnd, tStep);
+						
+						
+					}
+					if(expandedODMatrices.get(timeClick)[startNodeIndex][endNodeIndex] != 0.0){
+						System.out.println("time: " + timeClick + " tt: " + routeTT  +  " " + expandedODMatrices.get(timeClick)[startNodeIndex][endNodeIndex] );
+					}
+					else{
+						System.out.println("time: " + timeClick + " tt: " + "Irrelevant" );
+					}
+				}
+
+			}
+		}
+		
+	}
 
 @SuppressWarnings("unused")
 private double calculateGap(){
