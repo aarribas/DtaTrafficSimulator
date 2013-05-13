@@ -45,12 +45,18 @@ public class TrafficSimulator {
 	private double gap;
 	private int iteration;
 	private int timeClicksOfRouteInterval;
-	private boolean silent;
 	
-	public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClicksOfRouteInterval, boolean silent){
+	public enum VERBOSITY{
+		SILENT,
+		VERBOSE,
+		VERY_VERBOSE
+	}
+	private VERBOSITY verbosity;
+	
+	public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClicksOfRouteInterval, VERBOSITY  verbosity){
 		
 		this(fileName, tEnd, tStep, timeClicksOfRouteInterval);
-		this.silent = silent;
+		this.verbosity = verbosity;
 	}
 
 	public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClicksOfRouteInterval){
@@ -59,7 +65,7 @@ public class TrafficSimulator {
 		this.timeClicksOfRouteInterval = timeClicksOfRouteInterval;
 		
 		//by default we are not silent
-		this.silent = false;
+		this.verbosity = VERBOSITY.SILENT;
 		
 		TrafficDataLoader loader = new TrafficDataLoader();
 		tfData = loader.load(fileName);
@@ -89,10 +95,14 @@ public class TrafficSimulator {
 		//		double[][] flows = CumulativeBasedCalculator.calculateCumulativeToFlows(tfData.links, SIM_FLOW_OPTION.UPSTREAM, tEnd, tStep);
 		//		double[][] density = CumulativeBasedCalculator.calculateCumulativeToDensity(tfData.links, tEnd, tStep);
 	}
+	
+	private boolean verbose(){
+		return verbosity == VERBOSITY.VERBOSE || verbosity == VERBOSITY.VERY_VERBOSE;
+	}
 
 	public void runDTA(int maxIterations, TrafficSwappingHeuristic heuristic){
 
-		if(!silent){System.out.println("->NEW DTA BEGINS");}
+		if(verbose()){System.out.println("->NEW DTA BEGINS");}
 
 		iteration = 1;
 
@@ -123,7 +133,7 @@ public class TrafficSimulator {
 
 			iteration++; //as in original MATLAB code
 
-			if(!silent){System.out.println("it: " + iteration);}
+			if(verbosity == VERBOSITY.VERY_VERBOSE){System.out.println("it: " + iteration);}
 
 			//calculateTurningFRactions
 			computeTurningFractions(timeClicksOfRouteInterval, 0, linkSpeedsAtArrival, oldRoutes, oldRouteFractions);
@@ -144,7 +154,7 @@ public class TrafficSimulator {
 
 			//recalculate the gap
 			setGap(calculateGec());
-			if(!silent){System.out.println("GAP:" + gap);}
+			if(verbosity == VERBOSITY.VERY_VERBOSE){System.out.println("GAP:" + gap);}
 
 			if(checkForConvergence()){
 				return;
@@ -158,7 +168,7 @@ public class TrafficSimulator {
 			if(heuristic.getRoutes() == null || heuristic.getRouteFractions() == null){
 
 				//if the heuristic routes/routeFractions are null, the heuristic is telling us to stop
-				if(!silent){System.out.println("->ABORTED");}
+				if(verbose()){System.out.println("->ABORTED");}
 				return;
 			}
 			else{
@@ -181,7 +191,7 @@ public class TrafficSimulator {
 
 	private boolean checkForConvergence(){
 		if(gap < 0.2){
-			if(!silent){System.out.println("->CONVERGED");}
+			if(verbose()){System.out.println("->CONVERGED");}
 			return true;
 		}
 		else{
@@ -190,6 +200,8 @@ public class TrafficSimulator {
 	}
 
 	public void displayRouteFractionPerRouteInterval(){
+		
+		System.out.println("Route Fractions Per Route Interval");
 
 		//display each available routeFractions per ODPair and route
 		for(int setOfRoutesIndex = 0; setOfRoutesIndex< oldRoutes.size(); setOfRoutesIndex++){
@@ -214,9 +226,9 @@ public class TrafficSimulator {
 	
 	public void displayRouteTravelTimesPerRoute(){
 		
-
+		System.out.println("Route Travel Times Per Route:");
 		for(int setOfRoutesIndex = 0; setOfRoutesIndex< oldRoutes.size(); setOfRoutesIndex++){
-			System.out.println("ODPauir: " + setOfRoutesIndex);
+			System.out.println("ODPair: " + setOfRoutesIndex);
 			for(int routeIndex = 0; routeIndex< oldRoutes.get(setOfRoutesIndex).size(); routeIndex++){
 				
 				System.out.println("routeIndex: " + routeIndex);
