@@ -16,12 +16,13 @@ public class Main {
 	public static void main(String[] args) {
 		
 		//start simulator params = file, overall simulation duration, time click duration, duration of route interval in timeClicks
-		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/toy_parfix.mat", 3, 0.004, 50, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
+//		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/toy_parfix.mat", 3, 0.004, 50, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
+		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/net5.mat", 0.75, 0.0025, 50, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
 		//sim.runDNLOnly();
 		//create a swapping heuristic
-		TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicDEC(1.0); 
-//		TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicMSA(); 
-		sim.runDTA(300, heuristic);
+ 		//TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicDEC(1.0); 
+ 		TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicMSA(); 
+		sim.runDTA(100000, heuristic);
 		sim.displayRouteFractionPerRouteInterval();
 		sim.displayRouteTravelTimesPerRoute();
 		System.out.println("Iterations: " +sim.getIteration());

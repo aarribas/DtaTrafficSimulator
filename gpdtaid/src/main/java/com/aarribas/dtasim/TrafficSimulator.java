@@ -53,6 +53,14 @@ public class TrafficSimulator {
 	}
 	private VERBOSITY verbosity;
 	
+	
+public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClicksOfRouteInterval, VERBOSITY  verbosity, float netScale, float demandScale){
+		
+		this(fileName, tEnd, tStep, timeClicksOfRouteInterval, verbosity);
+		tfData.scaleNetwork(netScale);
+		tfData.scaleDemand(demandScale);
+	}
+	
 	public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClicksOfRouteInterval, VERBOSITY  verbosity){
 		
 		this(fileName, tEnd, tStep, timeClicksOfRouteInterval);
@@ -190,7 +198,7 @@ public class TrafficSimulator {
 	}
 
 	private boolean checkForConvergence(){
-		if(gap < 0.2){
+		if(gap < 0.1){
 			if(verbose()){System.out.println("->CONVERGED");}
 			return true;
 		}
