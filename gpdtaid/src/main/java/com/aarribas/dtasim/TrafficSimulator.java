@@ -13,6 +13,7 @@ import com.aarribas.traffictools.CumulativeBasedCalculator;
 import com.aarribas.traffictools.DynamicDijkstra;
 import com.aarribas.traffictools.PathFinder;
 import com.aarribas.traffictools.PathRepresentation;
+import com.aarribas.traffictools.TrafficDataLogger;
 import com.aarribas.traffictools.TravelTimeManager;
 
 /**
@@ -42,9 +43,12 @@ public class TrafficSimulator {
 	private ArrayList<double[]> linkSpeedsAtArrival = new ArrayList<double[]>();
 	private ArrayList<ArrayList<double[][]>> turningFractions = new ArrayList<ArrayList<double[][]>>();
 	private PathFinder pathFinder;
-	private double gap;
+	private double gap, firstGap;
 	private int iteration;
 	private int timeClicksOfRouteInterval;
+	
+	boolean saveToFile;
+	private TrafficDataLogger tfDatalogger;
 	
 	public enum VERBOSITY{
 		SILENT,
@@ -68,6 +72,7 @@ public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClic
 	}
 
 	public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClicksOfRouteInterval){
+		this.saveToFile = false; //must be set explicitly
 		this.tEnd = tEnd;
 		this.tStep = tStep;
 		this.timeClicksOfRouteInterval = timeClicksOfRouteInterval;
@@ -108,7 +113,7 @@ public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClic
 		return verbosity == VERBOSITY.VERBOSE || verbosity == VERBOSITY.VERY_VERBOSE;
 	}
 
-	public void runDTA(int maxIterations, TrafficSwappingHeuristic heuristic){
+	public void runDTA(int maxIterations, double gapReduction, TrafficSwappingHeuristic heuristic){
 
 		if(verbose()){System.out.println("->NEW DTA BEGINS");}
 
@@ -163,10 +168,14 @@ public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClic
 			//recalculate the gap
 			setGap(calculateGec());
 			if(verbosity == VERBOSITY.VERY_VERBOSE){System.out.println("GAP:" + gap);}
+			if(iteration == 2){firstGap = gap;}
 
-			if(checkForConvergence()){
+			if(checkForConvergence(gapReduction)){
 				return;
 			}
+			
+			//save the gap to a file
+			if(saveToFile) tfDatalogger.saveGap(iteration, gap);
 
 			//compute routeFractions for next iteration by means of the path swapping heuristic
 			heuristic.setup(oldRoutes, oldRouteFractions, newRoutes, newRouteFractions, iteration);
@@ -197,8 +206,8 @@ public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClic
 
 	}
 
-	private boolean checkForConvergence(){
-		if(gap < 0.1){
+	private boolean checkForConvergence(double gapReduction){
+		if(gap < firstGap*gapReduction){
 			if(verbose()){System.out.println("->CONVERGED");}
 			return true;
 		}
@@ -837,6 +846,12 @@ public void setGap(double gap) {
 
 public int getIteration() {
 	return iteration;
+}
+
+public void setSaveToFile(boolean saveToFile){
+	this.saveToFile = saveToFile;
+	tfDatalogger = new TrafficDataLogger();
+	
 }
 
 }

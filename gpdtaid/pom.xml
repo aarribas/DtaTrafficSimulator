@@ -4,7 +4,6 @@
   <artifactId>gpdtaid</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>gpdta</name>
-  <description>mai thesis</description>
   <dependencies>
   	<dependency>
   		<groupId>com.jmatio</groupId>

@@ -16,18 +16,29 @@ public class Main {
 	public static void main(String[] args) {
 		
 		//start simulator params = file, overall simulation duration, time click duration, duration of route interval in timeClicks
-//		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/toy_parfix.mat", 3, 0.004, 50, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
-		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/net5.mat", 0.75, 0.0025, 50, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
-		//sim.runDNLOnly();
+	//	TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/toy_parfix.mat", 3, 0.004, 50, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
+		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/net2.mat", 0.75, 0.0025, 50, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
+		//TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/ref_net.mat", 3.5, 0.0025, 150, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
+		
+		//display initial time
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		Calendar cal = Calendar.getInstance();
+		System.out.println(dateFormat.format(cal.getTime()));
+		//save to file 
+		sim.setSaveToFile(true);
+		
 		//create a swapping heuristic
- 		//TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicDEC(1.0); 
+ 		//TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicDEC(0.01); 
  		TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicMSA(); 
-		sim.runDTA(100000, heuristic);
+		sim.runDTA(1000000, 0.00015, heuristic);
+		
+		//display some final info
 		sim.displayRouteFractionPerRouteInterval();
 		sim.displayRouteTravelTimesPerRoute();
 		System.out.println("Iterations: " +sim.getIteration());
-		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-		Calendar cal = Calendar.getInstance();
+		
+		//display final time
+		cal = Calendar.getInstance();
 		System.out.println(dateFormat.format(cal.getTime()));
 		
 	}
