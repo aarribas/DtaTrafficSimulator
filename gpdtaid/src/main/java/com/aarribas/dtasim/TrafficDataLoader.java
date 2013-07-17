@@ -91,11 +91,18 @@ public class TrafficDataLoader {
 			tempLink.startNode = ((MLDouble) linkinfo.getField("startNode", i)).get(0);
 			tempLink.endNode = ((MLDouble) linkinfo.getField("endNode", i)).get(0);
 			tempLink.type = ((MLDouble) linkinfo.getField("type", i)).get(0);
-			tempLink.kJam = ((MLDouble) linkinfo.getField("kJam", i)).get(0);
+			
 			tempLink.capacity = ((MLDouble) linkinfo.getField("capacity", i)).get(0);
 			tempLink.freeSpeed = ((MLDouble) linkinfo.getField("freeSpeed", i)).get(0);
 			tempLink.length = ((MLDouble) linkinfo.getField("length", i)).get(0);
 
+			if(!linkinfo.getField("kJam", i).isEmpty() ){
+				tempLink.kJam = ((MLDouble) linkinfo.getField("kJam", i)).get(0);	
+			}
+			else{
+				tempLink.kJam =	-tempLink.capacity / 18.0 + tempLink.capacity/tempLink.freeSpeed;
+			}
+			
 			trafficData.links.add(tempLink);
 		}
 

@@ -207,7 +207,7 @@ public TrafficSimulator(String fileName, double tEnd, double tStep, int timeClic
 	}
 
 	private boolean checkForConvergence(double gapReduction){
-		if(gap < firstGap*gapReduction){
+		if(gap < firstGap*gapReduction || gap == 0){
 			if(verbose()){System.out.println("->CONVERGED");}
 			return true;
 		}
