@@ -4,8 +4,10 @@ import com.aarribas.dtasim.TrafficData;
 import com.aarribas.dtasim.TrafficLink;
 import com.aarribas.dtasim.TrafficODPair;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Scanner;
 
 public class DynamicDijkstra extends PathFinder {
 
@@ -23,7 +25,7 @@ public class DynamicDijkstra extends PathFinder {
 		//initialise the new routes and routeFractions
 		this.routes = cloneRoutes(oldRoutes);
 		this.routeFractions = cloneRouteFractions(oldRouteFractions);
-		
+
 		if(routes.isEmpty()){
 
 			//look for a path for each od pair per routeInterval
@@ -113,11 +115,10 @@ public class DynamicDijkstra extends PathFinder {
 					}
 					else{
 						PathRepresentation tempPathRepresentation = new PathRepresentation(pathNodeIndexes, pathLinkIndexes);
-						tempPathRepresentation.toString();
+						
 						//compare to each route for that odpair
 						for(int routeIndex = 0; routeIndex < routes.get(odIndex).size(); routeIndex++){
-							
-							
+					
 							if(tempPathRepresentation.equals(routes.get(odIndex).get(routeIndex))){
 								routeAlreadyFound = true;
 								shortestRouteIndex = routeIndex;
@@ -169,11 +170,16 @@ public class DynamicDijkstra extends PathFinder {
 
 	}
 
+	private Scanner Scanner(InputStream in) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	private void addPathRepresentation(int odIndex, PathRepresentation pathRepresentation){
 
 		//TODO improve this part - it should be possible to use one single add.
 		//if no routes for index increment the size	
-		if (odIndex <= routes.size())
+		if (odIndex >= routes.size())
 		{
 			routes.add(new ArrayList<PathRepresentation>());
 		}
@@ -194,7 +200,7 @@ public class DynamicDijkstra extends PathFinder {
 		//TODO improve this part - it should be possible to use one single add.
 
 		//if no routes for index increment the size	
-		if (odIndex <= routeFractions.size())
+		if (odIndex >= routeFractions.size())
 		{
 			routeFractions.add(new ArrayList<Double[]>());
 		}

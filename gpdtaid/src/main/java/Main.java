@@ -15,20 +15,22 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 		
+		
 		//start simulator params = file, overall simulation duration, time click duration, duration of route interval in timeClicks
 	//	TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/toy_parfix.mat", 3, 0.004, 50, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
-		//TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/net1.mat", 0.75, 0.0025, 50, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
-		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/rotterdam2.mat", 3.5, 0.0025, 150, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
+		//TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/ref_net.mat", 3.5, 0.0025, 50, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
+		TrafficSimulator sim = new TrafficSimulator("/Users/andresaan/Documents/MAI/Thesis/matlab/Exercise Final/rotterdam5.mat", 0.50, 0.0025, 50, TrafficSimulator.VERBOSITY.VERY_VERBOSE);
 		
 		//display initial time
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		Calendar cal = Calendar.getInstance();
 		System.out.println(dateFormat.format(cal.getTime()));
+		
 		//save to file 
-		sim.setSaveToFile(true);
+		//sim.setSaveToFile(true);
 		
 		//create a swapping heuristic
- 		//TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicDEC(0.1); 
+ 		//TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicDEC(1.0); 
  		TrafficSwappingHeuristic  heuristic = new TrafficSwappingHeuristicMSA(); 
  		sim.runDTA(10000, 0.0015, heuristic);
 		

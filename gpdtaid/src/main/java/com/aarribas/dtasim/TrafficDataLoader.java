@@ -93,15 +93,19 @@ public class TrafficDataLoader {
 			tempLink.type = ((MLDouble) linkinfo.getField("type", i)).get(0);
 			
 			tempLink.capacity = ((MLDouble) linkinfo.getField("capacity", i)).get(0);
+			
 			tempLink.freeSpeed = ((MLDouble) linkinfo.getField("freeSpeed", i)).get(0);
-			tempLink.length = ((MLDouble) linkinfo.getField("length", i)).get(0);
-
+			tempLink.length = ((MLDouble) linkinfo.getField("length", i)).get(0);	
+			
+			//the following will ensure that kjam is set so that the spillback speed is 18.
+			//this is required for .mat files where links have no kjam
 			if(!linkinfo.getField("kJam", i).isEmpty() ){
 				tempLink.kJam = ((MLDouble) linkinfo.getField("kJam", i)).get(0);	
 			}
 			else{
-				tempLink.kJam =	-tempLink.capacity / 18.0 + tempLink.capacity/tempLink.freeSpeed;
-			}
+				tempLink.kJam =	tempLink.capacity / 18.0 - tempLink.capacity/tempLink.freeSpeed;
+ 			}
+			
 			
 			trafficData.links.add(tempLink);
 		}

@@ -315,7 +315,10 @@ public class LTM implements TrafficNetworkModel {
 
 			//if -w > freespeed issue a warning 
 			if(-link.w>link.freeSpeed){
-				System.out.println("Warning: -w>freespeed on link: " + link.id + " with index " + linkIndex);	
+				//original warning as in the matlab code is commented out
+				//System.out.println("Warning: -w>freespeed on link: " + link.id + " with index " + linkIndex);	
+				//instead we fix a reasonable spillback speed
+				link.w = -link.freeSpeed;
 			}
 		}
 

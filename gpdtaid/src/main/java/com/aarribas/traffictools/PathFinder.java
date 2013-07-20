@@ -51,7 +51,7 @@ public abstract class PathFinder {
 
 	public ArrayList<ArrayList<Double[]>> getRouteFractions(){
 
-		return this.routeFractions;
+		return routeFractions;
 	}
 
 	public ArrayList<ArrayList<PathRepresentation>> getClonedRoutes(){
@@ -71,7 +71,20 @@ public abstract class PathFinder {
 
 					for(int rtIndex = 0 ; rtIndex < routesToClone.get(setOfRoutes).size(); rtIndex++ ){
 						//clone the full double array
-						PathRepresentation rt = routesToClone.get(setOfRoutes).get(rtIndex).clone();
+						//usually clone would be used here - had to test without clone -- TBD put clone back
+						Integer[] intgn = new Integer[routesToClone.get(setOfRoutes).get(rtIndex).nodeIndexes.length];
+						int[] intgl = new int[routesToClone.get(setOfRoutes).get(rtIndex).linkIndexes.length];
+						
+						for(int  i=0; i<routesToClone.get(setOfRoutes).get(rtIndex).nodeIndexes.length; i++ ){
+							
+							intgn[i] = routesToClone.get(setOfRoutes).get(rtIndex).nodeIndexes[i];
+						}
+						
+						for(int  i=0; i<routesToClone.get(setOfRoutes).get(rtIndex).linkIndexes.length; i++ ){							
+							intgl[i] = routesToClone.get(setOfRoutes).get(rtIndex).linkIndexes[i];
+						}
+						
+						PathRepresentation rt = new PathRepresentation(intgn, intgl);
 						rtForOD.add(rt);
 					}
 
@@ -98,7 +111,14 @@ public abstract class PathFinder {
 
 			for(int rtf = 0 ; rtf < routeFractionsToClone.get(setOfRoutes).size(); rtf++ ){
 				//clone the full double array
-				Double[] rtFracs = routeFractionsToClone.get(setOfRoutes).get(rtf).clone();
+				Double[] rtFracs = new Double[routeFractionsToClone.get(setOfRoutes).get(rtf).length];
+				//usually clone would be used here - had to test without clone -- TBD put clone back
+				
+				for(int i = 0; i<routeFractionsToClone.get(setOfRoutes).get(rtf).length; i++ ){
+					rtFracs[i] = routeFractionsToClone.get(setOfRoutes).get(rtf)[i].doubleValue();
+					//routeFractionsToClone.get(setOfRoutes).get(rtf)[i] = null;
+				}
+				
 				rtFracForOD.add(rtFracs);
 			}
 			clonedRouteFractions.add(rtFracForOD);
@@ -116,6 +136,11 @@ public abstract class PathFinder {
 	public void setRouteFractions(ArrayList<ArrayList<Double[]>> routeFractions){
 		this.routeFractions = routeFractions;
 
+	}
+	
+	public void resetRoutesAndRouteFractions(){
+		routes = null;
+		routeFractions = null;
 	}
 
 

@@ -35,15 +35,46 @@ public abstract class TrafficSwappingHeuristic {
 	abstract public void run();
 	
 	public ArrayList< ArrayList<PathRepresentation>> getRoutes(){
-		return this.finalRoutes;
+		return finalRoutes;
 	}
 	
+	public ArrayList< ArrayList<Double[]>> getClonedRouteFractions(){
+		ArrayList< ArrayList<Double[]>> rtf = cloneRouteFractions(finalRouteFractions);
+		return rtf;
+		
+	}
+	
+
 	public ArrayList< ArrayList<Double[]>> getRouteFractions(){
-		return this.finalRouteFractions;
+		return finalRouteFractions;
+		
 	}
+//	
+//	public void reset(){
+//		resetRouteFrac(finalRouteFractions);
+//		
+//	}
+//	
+//	protected void resetRouteFrac(ArrayList< ArrayList<Double[]>> routeFractions){
+//		
+//
+//		//display each available routeFractions per ODPair and route
+//		for(int setOfRoutesIndex = 0; setOfRoutesIndex< routeFractions.size(); setOfRoutesIndex++){
+//			for(int routeIndex = 0; routeIndex< routeFractions.get(setOfRoutesIndex).size(); routeIndex++){		
+//
+//				for(int  i = 0; i<routeFractions.get(setOfRoutesIndex).get(routeIndex).length; i++){
+//					routeFractions.get(setOfRoutesIndex).get(routeIndex)[i] = null;
+//				}
+//				routeFractions.get(setOfRoutesIndex).set(routeIndex, null);
+//
+//			}
+//		}
+//		
+//	}
 	
 	
-	public ArrayList<ArrayList<PathRepresentation>> cloneRoutes(ArrayList<ArrayList<PathRepresentation>> routes){
+	
+	protected ArrayList<ArrayList<PathRepresentation>> cloneRoutes(ArrayList<ArrayList<PathRepresentation>> routes){
 		ArrayList<ArrayList<PathRepresentation>> clonedRoutes = new ArrayList<ArrayList<PathRepresentation>>();
 		
 		for(int setOfRoutes =0;  setOfRoutes < routes.size(); setOfRoutes++){
@@ -60,6 +91,34 @@ public abstract class TrafficSwappingHeuristic {
 		
 		return clonedRoutes;
 
+	}
+	
+
+	protected ArrayList<ArrayList<Double[]>> cloneRouteFractions(ArrayList<ArrayList<Double[]>> routeFractionsToClone){
+	
+		//the content of the routeFractions must be cloned so that the retrieved routeFractions do not point anymore 
+		//to the routeFractions member of PathFinder
+		ArrayList<ArrayList<Double[]>> clonedRouteFractions = new ArrayList<ArrayList<Double[]>>();
+
+		for(int setOfRoutes =0;  setOfRoutes < routeFractionsToClone.size(); setOfRoutes++){
+			ArrayList<Double[]> rtFracForOD = new ArrayList<Double[]>();
+
+			for(int rtf = 0 ; rtf < routeFractionsToClone.get(setOfRoutes).size(); rtf++ ){
+				//clone the full double array
+				
+				Double[] rtFracs = new Double[routeFractionsToClone.get(setOfRoutes).get(rtf).length];
+				
+				for(int i = 0; i<routeFractionsToClone.get(setOfRoutes).get(rtf).length; i++ ){
+					rtFracs[i] = routeFractionsToClone.get(setOfRoutes).get(rtf)[i].doubleValue();
+					//routeFractionsToClone.get(setOfRoutes).get(rtf)[i] = null;
+				}
+				
+				rtFracForOD.add(rtFracs);
+			}
+			clonedRouteFractions.add(rtFracForOD);
+		}
+
+		return clonedRouteFractions;
 	}
 
 }

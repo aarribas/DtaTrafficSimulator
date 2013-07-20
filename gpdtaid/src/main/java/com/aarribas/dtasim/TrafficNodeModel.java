@@ -144,7 +144,7 @@ public class TrafficNodeModel {
 	
 		while(linksToDo > 0){
 			
-			if(mostRestrictiveOutgoingLink != currNode.outgoingLinks.size()){
+			if(mostRestrictiveOutgoingLink != currNode.outgoingLinks.size()-1){  // -1 last min change
 				mostRestrictiveOutgoingLink = mostRestrictiveOutgoingLink + 1;
 			}
 			else{
@@ -165,6 +165,7 @@ public class TrafficNodeModel {
 				else{
 					receivingFraction[j] = 1;
 				}
+				
 				if (receivingFraction[j] < mostRestrictiveConstraint){
 					mostRestrictiveOutgoingLink = j;
 					mostRestrictiveConstraint = receivingFraction[j];

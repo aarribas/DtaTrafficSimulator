@@ -35,7 +35,7 @@ public class TrafficSwappingHeuristicMSA extends TrafficSwappingHeuristic{
 
 		
 		//TODO VERIFY OLDROUTES VS NEWROUTES BELOW!!!
-		for(int setOfRoutesIndex = 0; setOfRoutesIndex< newRoutes.size(); setOfRoutesIndex++){
+		for(int setOfRoutesIndex = 0; setOfRoutesIndex< newRouteFractions.size(); setOfRoutesIndex++){
 			
 			ArrayList<Double[]> fractionsForOD = new ArrayList<Double[]>();
 			
@@ -74,9 +74,17 @@ public class TrafficSwappingHeuristicMSA extends TrafficSwappingHeuristic{
 		}
 		
 		//save finalRoutes and finalRouteFractions
-		finalRoutes = cloneRoutes(newRoutes);
+		finalRoutes = newRoutes;
 		finalRouteFractions = tempRouteFractions;
-		
 
 	}
+	
+//
+//	public void reset(){
+//		resetRouteFrac(finalRouteFractions);
+//		resetRouteFrac(oldRouteFractions);
+//		resetRouteFrac(newRouteFractions);
+//		
+//	}
+	
 }
